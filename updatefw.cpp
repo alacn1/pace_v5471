@@ -19,8 +19,14 @@
 #include <sys/stat.h>
 #include <openssl/md5.h> // libssl-dev
 
+#include <netdb.h>
+#include <unistd.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 
-#define SZ_VERSION			"v0.1"
+
+
+#define SZ_VERSION			"v0.2"
 
 #define ERR					-1
 #define ERR_HEADER			-2
@@ -34,8 +40,18 @@
 #define ERR_FILEWRITE		-104
 #define ERR_FILESEEK		-105
 #define ERR_FILEEXISTS		-106
+#define ERR_SOCKET_ADDRESS	-200
+#define ERR_SOCKET_CONNECT	-201
+#define ERR_SOCKET_SEND		-202
+#define ERR_SOCKET_READ		-203
 
 #define BUFSIZE				4096
+#define SENDSIZE			1280
+#define SEND_WAIT_MSEC		2
+
+#define PRODCODE			0xB14103
+#define RECOVERY_ADDRESS	"239.255.255.240"
+#define RECOVERY_PORT		"53428"
 
 
 
@@ -173,13 +189,24 @@ struct HEADER // 4096
 };
 
 
-
 // magics for B14103
 const unsigned char CHECKSUM_MAGIC[CHECKSUM_SIZE] = {
 	0x0A, 0x20, 0x20, 0x42,
 	0x7C, 0x22, 0x61, 0xDB,
 	0x12, 0x78, 0xB2, 0x9B,
 	0x27, 0xB2, 0xCE, 0x31
+};
+
+
+// firmware recovery fragment
+struct FRAGMENT
+{
+	INT32B seq;
+	INT32B unk0;
+	INT32B prodcode; // 0x00B14103
+	INT32B address; // 0x80800000
+	INT32B fwsize;
+	INT32B fragsize;
 };
 
 
@@ -235,9 +262,31 @@ int err_fileexists()
 
 int err_header()
 {
-	printf("ERROR: invalid header");
+	printf("ERROR: invalid header\n");
 	return ERR_HEADER;
 }
+
+
+int err_socket_address()
+{
+	printf("ERROR: get socket address failed\n");
+	return ERR_SOCKET_ADDRESS;
+}
+
+
+int err_socket_connect()
+{
+	printf("ERROR: create socket failed\n");
+	return ERR_SOCKET_CONNECT;
+}
+
+
+int err_socket_send()
+{
+	printf("ERROR: socket send failed\n");
+	return ERR_SOCKET_SEND;
+}
+
 
 
 void stripext(char *fname)
@@ -788,9 +837,9 @@ int fwupdate(
 	}
 
 	// prodcode
-	if(header.prodcode != 0xB14103)
+	if(header.prodcode != PRODCODE)
 	{
-		printf("WARNING: prodcode is not 0xB14103\n");
+		printf("WARNING: prodcode is not 0x%X\n", PRODCODE);
 
 		if(!FORCE)
 		{
@@ -993,6 +1042,182 @@ int fwupdate(
 }
 
 
+void msleep(int msec)
+{
+	timespec t;
+	t.tv_sec = 0;
+	t.tv_nsec = 1000000 * msec;
+	nanosleep(&t, 0);
+}
+
+
+int recovery(const char *fname)
+{
+	FILE *f = fopen(fname, "rb");
+	if(0 == f) return err_fileopen();
+
+	unsigned char buf[BUFSIZE];
+	memset(buf, 0, sizeof(buf));
+
+	// load header
+	HEADER *header = (HEADER*)buf;
+	clearerr(f);
+	if(fread(header, 1, sizeof(HEADER), f) < sizeof(HEADER))
+	{
+		if(ferror(f))
+		{
+			fclose(f);
+			return err_fileread();
+		}
+
+		fclose(f);
+		return err_header();
+	}
+
+	// verify checksum
+	unsigned char verify[CHECKSUM_SIZE];
+	if(
+		(0 != getchecksum(f, verify, header)) ||
+		(0 != memcmp(header->checksum, verify, sizeof(verify)))
+		)
+	{
+		printf("ERROR: bad firmware checksum.\n");
+		fclose(f);
+		return ERR_CHECKSUM;
+	}
+
+	// file size
+	if(0 != fseek(f, 0, SEEK_END))
+	{
+		fclose(f);
+		return err_fileseek(0);
+	}
+	int fsize = ftell(f);
+
+	if(0 != fseek(f, 0, SEEK_SET))
+	{
+		fclose(f);
+		return err_fileseek(0);
+	}
+
+	// address info
+	addrinfo hints;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_INET;
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_protocol = IPPROTO_UDP;
+	hints.ai_flags = AI_NUMERICSERV;
+
+	addrinfo *addrlist = 0;
+	if((0 != getaddrinfo(RECOVERY_ADDRESS, RECOVERY_PORT, &hints, &addrlist)) || (0 == addrlist))
+	{
+		fclose(f);
+		return err_socket_address();
+	}
+
+	// create socket
+	int s = -1;
+	for(addrinfo *a=addrlist; 0!=a; a=a->ai_next)
+	{
+		s = socket(a->ai_family, a->ai_socktype, a->ai_protocol);
+		if(-1 == s) continue;
+
+		if(-1 == connect(s, a->ai_addr, a->ai_addrlen))
+		{
+			close(s);
+			continue;
+		}
+
+		// success
+		break;
+	}
+	freeaddrinfo(addrlist);
+
+	if(-1 == s)
+	{
+		fclose(f);
+		return err_socket_connect();
+	}
+
+	// local address
+	sockaddr_in saddr;
+	socklen_t saddrlen = sizeof(saddr);
+	char host[64];
+	memset(host, 0, sizeof(host));
+
+	if(
+		(0 == getsockname(s, (sockaddr*)&saddr, &saddrlen)) &&
+		(0 == getnameinfo(
+			(sockaddr*)&saddr, saddrlen,
+			host, sizeof(host),
+			0, 0,
+			NI_NUMERICHOST | NI_NUMERICSERV))
+		)
+	{
+		printf("from: %s\n", host);
+	}
+
+	// firmware fragment
+	memset(buf, 0, sizeof(buf));
+	FRAGMENT *frag = (FRAGMENT*)buf;
+	unsigned char *data = (buf + sizeof(FRAGMENT));
+
+	frag->prodcode = PRODCODE;
+	frag->address = 0x80800000;
+	frag->fwsize = fsize;
+
+	int q = fsize / 100;
+	int p = 0;
+
+	// read and send
+	printf("sending to %s:%s...\n", RECOVERY_ADDRESS, RECOVERY_PORT);
+	frag->seq = 0;
+	clearerr(f);
+	for(;;)
+	{
+		// read
+		int r = fread(data, 1, SENDSIZE, f);
+		if(r <= 0)
+		{
+			if(ferror(f))
+			{
+				close(s);
+				fclose(f);
+				return err_fileread();
+			}
+			break;
+		}
+		frag->fragsize = r;
+
+		// send
+		if(-1 == sendto(s, buf, sizeof(FRAGMENT)+r, 0, 0, 0))
+		{
+			close(s);
+			fclose(f);
+			return err_socket_send();
+		}
+
+		frag->seq += 1;
+
+		p += r;
+		if(p >= q)
+		{
+			p -= q;
+			printf(".");
+			fflush(stdout);
+		}
+		msleep(SEND_WAIT_MSEC);
+	}
+	printf("\n");
+
+	close(s);
+	fclose(f);
+
+	printf("done.\n");
+	return 0;
+}
+
+
 void info()
 {
 	printf(
@@ -1006,6 +1231,7 @@ void info()
 int usage()
 {
 	printf(
+		"Tool to update pace v5471 firmware.\n"
 		"usage:\n"
 		" info:\n"
 		"  updatefw [-i] fw.bin ...\n"
@@ -1023,6 +1249,10 @@ int usage()
 		"  -m  set release name string\n"
 		"  -n  keep current value of fields: filename, date, boot\n"
 		"  -o  set output file\n"
+		"\n"
+		" recovery:\n"
+		"  updatefw -r fw.bin\n"
+		"  -r  upload firmware to router when in recovery mode\n"
 	);
 
 	return 0;
@@ -1089,6 +1319,7 @@ int main(int argc, char *argv[])
 		MODE_INFO,
 		MODE_UPDATE,
 		MODE_EXTRACT,
+		MODE_RECOVERY,
 	};
 	MODE mode = MODE_0;
 
@@ -1158,6 +1389,16 @@ int main(int argc, char *argv[])
 				return err_args();
 			mode = MODE_UPDATE;
 		}
+		else if(0 == strcmp("-r", s))
+		{
+			++n;
+			if(n >= argc) return err_args();
+			fname = argv[n];
+
+			if((mode != MODE_0) && (mode != MODE_RECOVERY))
+				return err_args();
+			mode = MODE_RECOVERY;
+		}
 		else if(0 == strcmp("-n", s))
 		{
 			keep = true;
@@ -1215,6 +1456,8 @@ int main(int argc, char *argv[])
 		if((0 == fname) || (0 == out)) return err_args(); // all required
 		if((0 == kernel) && (0 == fs) && (0 == releasename)) return err_args(); // at least one
 		return fwupdate(fname, kernel, fs, releasename, out, keep);
+	case MODE_RECOVERY:
+		return recovery(fname);
 	}
 
 	return ERR;
