@@ -26,7 +26,7 @@
 
 
 
-#define SZ_VERSION			"v0.2"
+#define SZ_VERSION			"v0.3"
 
 #define ERR					-1
 #define ERR_HEADER			-2
@@ -1232,27 +1232,31 @@ int usage()
 {
 	printf(
 		"Tool to update pace v5471 firmware.\n"
-		"usage:\n"
-		" info:\n"
+		"Usage:\n"
 		"  updatefw [-i] fw.bin ...\n"
-		"  -i  display firmware information\n"
+		"    Display firmware information.\n"
+		"    -i  information mode\n"
 		"\n"
-		" extract:\n"
 		"  updatefw -x fw.bin ...\n"
-		"  -x  extract firmware to fw.header, fw.kernel, fw.fs\n"
+		"    Extract firmware to fw.header, fw.kernel, fw.fs.\n"
+		"    -x  extract mode\n"
 		"\n"
-		" update:\n"
 		"  updatefw -u fw.bin [-k kernel] [-s fs] [-m rel] [-n] -o outfw.bin\n"
-		"  -u  update firmware to a new file\n"
-		"  -k  set kernel file\n"
-		"  -s  set squashfs file\n"
-		"  -m  set release name string\n"
-		"  -n  keep current value of fields: filename, date, boot\n"
-		"  -o  set output file\n"
+		"    Update firmware to a new file.\n"
+		"    WARNING! you can generate bad firmware with valid checksum.\n"
+		"    -u  set source firmware\n"
+		"    -k  set kernel file\n"
+		"    -s  set squashfs file\n"
+		"    -m  set release name string\n"
+		"    -n  keep current value of fields: filename, date, boot\n"
+		"    -o  set output file\n"
 		"\n"
-		" recovery:\n"
 		"  updatefw -r fw.bin\n"
-		"  -r  upload firmware to router when in recovery mode\n"
+		"    Upload firmware to router in recovery mode.\n"
+		"    -r  set firmware to upload\n"
+		"\n"
+		"    To enter multicast mode (recovery), turn on the router, holding reset or wps button.\n"
+		"    Note that it will boot the uploaded firmware but won't save it.\n"
 	);
 
 	return 0;
