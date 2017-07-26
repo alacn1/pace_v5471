@@ -1,0 +1,895 @@
+#!/bin/sh
+# /etc/bewan/lib/wifi
+
+# specific vendor functions used by wifi scripts
+# setparam must be included
+
+# Working variables
+# $ETHID: WLANInterface index
+# $ifname: name of wifi network interface
+# $WIFID/$ifname: working directory of WIFI interface
+
+if [ ${WIFI_LIB_LOADED:-0} -eq 1 ]; then
+  return
+fi
+
+WIFI_LIB_LOADED=1
+
+BCMINITRUNNING=0
+if base_enter_critical 'bcmwl-init' 'nowait'; then
+  base_exit_critical 'bcmwl-init'
+else
+#   base_log "lib/wifi: init running..." debug
+  BCMINITRUNNING=1
+fi
+
+# Allow editing wl.conf file
+wl_conf_set() {
+  if [ -z "${1:-}" ]; then
+    return
+  fi
+  sed -i "/^$1=/d" ${WIFID}/wl.conf
+  echo "$1=${2:-}" >> ${WIFID}/wl.conf
+}
+
+# Allow editing ssid#.conf file
+ssid_conf_set() {
+  if [ -z "${1:-}" ]; then
+    return
+  fi
+  sed -i "/^$1=/d" ${WIFID}/ssid${ETHID}.conf
+  echo "$1=${2:-}" >> ${WIFID}/ssid${ETHID}.conf
+}
+
+# LED management
+wifi_led_ctrl() {
+  # Test if ledctl exists
+  [ ! -f /usr/bin/ledctl ] && return
+
+  # Stop WiFi LED blinking
+  stop_wifi_blink
+
+  # Set WiFi main LED interface and verify that it's the good WiFi interface
+  local wlanid=`cat $led_cfg_file | grep led_main_interface_id | cut -d'=' -f2`
+  [ "${ETHID:-}" != "${wlanid:-}" ] && return
+
+  # Must save LED context for restore processing
+  local led_save_file=$WIFID/wifi_led.save
+  if [ ! -f $led_save_file ]; then
+    local old_blink_period=`ledctl g | cut -d' ' -f4`
+    local old_pattern_period=`ledctl e | cut -d' ' -f4`
+    touch $led_save_file
+cat >> $led_save_file <<-EOF
+blink_period=${old_blink_period}
+pattern_period=${old_pattern_period}
+EOF
+  fi
+
+  # LED count
+  local led_count=`cat $led_cfg_file | grep led_count | cut -d'=' -f2`
+
+  # Period management
+  local blink_period=`cat $led_cfg_file | grep blink_period | cut -d'=' -f2`
+  local pattern_period=`cat $led_cfg_file | grep pattern_period | cut -d'=' -f2`
+  ledctl G$blink_period && ledctl E$pattern_period
+
+  # Get WiFi settings
+  local wlanifenable; eval wlanifenable=\${'WLANInterface_'$wlanid'_Enable':-0}
+  local wpamode; eval wpamode=\${'WLANInterface_'$wlanid'_Config_BeaconType':-Basic}
+  local wepmode; eval wepmode=\${'WLANInterface_'$wlanid'_Config_WEPEncryption':-None}
+  local radioen=${WLANConfig_RadioEnable:-0}
+  local wlen=${WLANConfig_Enable:-0}
+  local wifien=0
+  local final_cmd='true'
+
+  if [ "$wlanifenable" = '0' ] || [ "$wlen" = '0' ] || [ "$radioen" = '0' ]; then
+    wifien=0
+  elif [ "$wlanifenable" = '1' ] && [ "$wlen" = '1' ] && [ "$radioen" = '1' ]; then
+    wifien=1
+  fi
+
+  # We proccess all LEDs
+  local i=0; while [ $i -lt ${led_count:-0} ]; do
+    i=`expr $i + 1`
+    local led_name=`cat $led_cfg_file | grep name_$i | cut -d'=' -f2`
+    # We turn off the LED
+    final_cmd="$final_cmd && ledctl s$led_name"
+
+    # WiFi disabled
+    if [ "$wifien" = '0' ]; then
+      local nowifi_state=`cat $led_cfg_file | grep nowifi_state_$i | cut -d'=' -f2`
+      [ "$nowifi_state" = '1' ] && final_cmd="$final_cmd && ledctl S$led_name"
+
+    # WiFi enabled
+    elif [ "$wpamode" = 'Basic' ]; then
+      case "$wepmode" in
+        None)
+          local noenc_state=`cat $led_cfg_file | grep noenc_state_$i | cut -d'=' -f2`
+          [ "$noenc_state" = '1' ] && final_cmd="$final_cmd && ledctl S$led_name"
+          ;;
+        *)
+          local wep_state=`cat $led_cfg_file | grep wep_state_$i | cut -d'=' -f2`
+          [ "$wep_state" = '1' ] && final_cmd="$final_cmd && ledctl S$led_name"
+          ;;
+      esac
+    else
+      local wpa_state=`cat $led_cfg_file | grep wpa_state_$i | cut -d'=' -f2`
+      [ "$wpa_state" = '1' ] && final_cmd="$final_cmd && ledctl S$led_name"
+    fi
+
+    # Blink management
+    local blink=`cat $led_cfg_file | grep blink_$i | cut -d'=' -f2`
+    if [ "$wifien" = '1' ] && [ "$blink" = '1' ]; then
+      final_cmd="$final_cmd && ledctl b$led_name"
+    fi
+
+    # Pattern management
+    local pattern=`cat $led_cfg_file | grep pattern_$i | cut -d'=' -f2`
+    if [ "$wifien" = '1' ] && [ "$pattern" = '1' ]; then
+      local pattern_value=`cat $led_cfg_file | grep pattern_value_$i | cut -d'=' -f2`
+      final_cmd="$final_cmd && ledctl B$led_name,$pattern_value"
+    fi
+  done
+
+  # Execute the command
+  eval $final_cmd
+
+  local blink_ontraffic=`cat $led_cfg_file | grep blink_ontraffic | cut -d'=' -f2`
+  if [ "${WLANConfig_EasyPairing:-0}" = '0' ] && [ "$blink_ontraffic" = '1' ] && [ "$wlen" = '1' ] && [ "$radioen" = '1' ]; then
+    start_wifi_blink
+  fi
+
+  if [ "$wifien" = '0' ]; then
+    # Restore LED context
+    if [ -f $led_save_file ]; then
+      local old_blink_period=`cat $led_save_file | grep blink_period | cut -d'=' -f2`
+      local old_pattern_period=`cat $led_save_file | grep pattern_period | cut -d'=' -f2`
+      ledctl G$old_blink_period && ledctl E$old_pattern_period && rm $led_save_file
+    fi
+  fi
+}
+
+# Start wifi_led_blink program (only if not already running)
+start_wifi_blink() {
+  if [ ! -f /var/run/wifi_led_blink.pid ] && [ -f /bin/wifi_led_blink ]; then
+    /bin/wifi_led_blink 2>&1 1>/dev/null &
+  fi
+}
+
+# Stop wifi_led_blink program (if running)
+stop_wifi_blink() {
+  if [ -f /var/run/wifi_led_blink.pid ]; then
+    killall -HUP wifi_led_blink 2>&1 1>/dev/null
+    killall wifi_led_blink 2>&1 1>/dev/null
+  fi
+}
+
+# Refresh pairingd settings (if running)
+reload_pairingd() {
+  if [ -f /var/run/pairingd.pid ]; then
+    killall -HUP pairingd 2>&1 1>/dev/null
+  fi
+}
+
+# Refresh WiFi LEDs regarding settings (if pairingd running)
+refresh_leds() {
+  if [ -f /var/run/wifi_led_mgmt.pid ]; then
+    killall -HUP wifi_led_mgmt 2>&1 1>/dev/null
+  fi
+}
+
+# Set WiFi LEDs OFF (if pairingd running)
+refresh_leds_off() {
+  if [ -f /var/run/wifi_led_mgmt.pid ]; then
+    killall -USR1 wifi_led_mgmt 2>&1 1>/dev/null
+  fi
+}
+
+# Decrement wifionoff counters (if pairingd running and if wifionoff file exists)
+decrement_onoff() {
+  if [ -f /var/run/pairingd.pid ] && [ -f $WIFID/wifionoff ]; then
+    killall -USR1 pairingd 2>&1 1>/dev/null
+  fi
+}
+
+check_vendor_wifi() {
+  if [ "$BCMINITRUNNING" = '1' ]; then
+    return 1
+  fi
+  
+  if [ "$ifname" = '' ]; then
+    return 1
+  fi
+
+  if ! find /lib/modules -type f -name wl.ko |grep -q /extra/; then
+    return 1
+  fi
+
+  if [ ! -f /bin/wlmngr ]; then
+    return 1
+  fi
+  return 0
+}
+
+restart_vendor_wifi() {
+#   base_log "lib/wifi: restart_vendor_wifi (init=$BCMINITRUNNING)" debug
+  if [ "$BCMINITRUNNING" = '1' ]; then
+    return
+  fi
+  stop_vendor_wifi
+  start_vendor_wifi
+}
+
+stop_vendor_wifi() {
+#   base_log "lib/wifi: stop_vendor_wifi ifname=$ifname (init=$BCMINITRUNNING)" debug
+  if [ "$BCMINITRUNNING" = '1' ]; then
+    return
+  fi
+  rm -rf $INTFD/$ifname
+
+  # Disable SSID
+  local wlen=${WLANConfig_Enable:-0}
+  ssid_conf_set wlEnblSsid 0
+
+  # LED management
+  local led_cfg_file=/etc/bewan/config.default/wifi_led.cfg
+
+  # Switch LED off if no enabled WiFi interfaces
+  local has_intf_enabled=0
+  local i=0; while [ $i -lt ${WLANInterface_Count:-0} ]; do
+    i=$(($i + 1))
+    eval en=\${'WLANInterface_'$i'_Enable':-0}
+    [ $en = 1 ] && has_intf_enabled=1 && break
+  done
+
+  if [ $ARG = stop ]; then
+    if [ "$has_intf_enabled" = '0' ] || [ "$wlen" = '0' ]; then
+      # Refresh LED states
+      if [ "${WLANConfig_EasyPairing:-0}" = '0' ]; then
+        wifi_led_ctrl
+      else
+        [ ! -f $WIFID/wifionoff ] && refresh_leds_off
+      fi
+    fi
+    # Launch wl manager again
+#     base_log "lib/wifi: stop_vendor_wifi Launch wlmanager" debug
+    /bin/wlmngr 2>&1 1>/dev/null
+  fi
+
+  # Decrement wifionoff
+  decrement_onoff
+
+  # Reload pairingd settings
+  reload_pairingd
+}
+
+start_vendor_wifi() {
+#   base_log "lib/wifi: start_vendor_wifi ifname=$ifname (init=$BCMINITRUNNING)" debug
+  if [ "$BCMINITRUNNING" = '1' ]; then
+    return
+  fi
+  mkdir $INTFD/$ifname
+
+  # Reload pairingd settings
+  reload_pairingd
+
+  # Decrement wifionoff
+  decrement_onoff
+
+  # LED management
+  local led_cfg_file=/etc/bewan/config.default/wifi_led.cfg
+
+  rm -f ${WIFID}/wl.conf
+  rm -f ${WIFID}/ssid${ETHID}.conf
+  touch ${WIFID}/wl.conf
+  touch ${WIFID}/ssid${ETHID}.conf
+
+  # Create wifi_boot file
+  touch $WIFID/wifi_boot
+
+  # Prevent sub functions from calling wlmngr
+  touch $WIFID/nowlmngr
+
+  # Start easyp only if pairingd is not running
+  [ ! -f /var/run/pairingd.pid ] && base_call_initd 'easyp'
+
+  # Refresh LED states
+  if [ "${WLANConfig_EasyPairing:-0}" = '0' ]; then
+    wifi_led_ctrl
+  else
+    # Force LED mgmt for a faster LED mgmt (only if EasyPairing isn't running)
+    [ ! -f /var/run/pairingd.pid ] && wifi_led_ctrl
+    if [ ! -f $WIFID/wifionoff ] && [ ! -f $WIFID/wifiwps ]; then
+      refresh_leds
+    fi
+  fi
+  local macaddr=`pzinfo lanmac`
+  local lq_mac; eval lq_mac=\${'WLANInterface_'$ETHID'_MacOffset':-0}
+  local i; for i in `strip $lq_mac`; do
+    macaddr=`macoffset $i $macaddr`
+  done
+  # Set MAC address only once and for the wl0 interface
+  /sbin/ifconfig wl0 | grep UP 2>&1 1>/dev/null
+  [ $? = 1 ] && /sbin/ifconfig wl0 hw ether $macaddr 
+  ssid_conf_set wlWscAuthoStaMac "$macaddr"
+
+  # Enable SSID
+  local wlen=${WLANConfig_Enable:-0}
+  local wlanen; eval wlanen=\${'WLANInterface_'$ETHID'_Enable':-0}
+  local enablessid=0
+  if [ "$wlen" = '1' ] && [ "$wlanen" = '1' ]; then
+    enablessid=1
+  fi
+  ssid_conf_set wlEnblSsid $enablessid
+  
+  wl_conf_set wlMode ap
+
+  # LAN number
+  local i=0; while [ $i -lt ${LANDevice_Count:-0} ]; do
+    i=$(($i + 1))
+    local wlandevice; eval wlandevice=\${'LANDevice_'$i'_WLANInterface_'$ETHID'_Enable':-0}
+    [ "$wlandevice" = '1' ] && ssid_conf_set wlBrName lan$i && break
+  done
+
+  # Choose country
+  local ARG=restart
+  base_call_initd 'wificountry'
+  base_call_initd 'wificom'
+
+  # Set DTIM period
+  local dtim; eval dtim=\${'WLANInterface_'$ETHID'_Config_DTIMPeriod':-1}
+  [ "$ETHID" = '1' ] && wl_conf_set wlDtmIntvl $dtim
+  
+  # Hide SSID
+  local hidessid; eval hidessid=\${'WLANInterface_'$ETHID'_Config_HideSSID':-0}
+  ssid_conf_set wlHide $hidessid
+
+  # Set RTS and Fragment thresholds
+  local rtsthreshold; eval rtsthreshold=\${'WLANInterface_'$ETHID'_Config_RTSThreshold':-2347}
+  [ "$ETHID" = '1' ] && wl_conf_set wlRtsThrshld $rtsthreshold
+  local fragthreshold; eval fragthreshold=\${'WLANInterface_'$ETHID'_Config_FragThreshold':-2346}
+  [ "$ETHID" = '1' ] && wl_conf_set wlFrgThrshld $fragthreshold
+
+  local beacontype; eval beacontype=\${'WLANInterface_'$ETHID'_Config_BeaconType':-Basic}
+  local wepencrypt; eval wepencrypt=\${'WLANInterface_'$ETHID'_Config_WEPEncryption':-None}
+  local wpaencrypt; eval wpaencrypt=\${'WLANInterface_'$ETHID'_Config_WPAEncryption':-Auto}
+  local wpsen; eval wpsen=\${'WLANInterface_'$ETHID'_WPSEnable':-0}
+  local wlwep=disabled
+  local wlauth=0
+  local wlauthmode=open
+  local wlwpa=''
+  # Disable wps mode if wep or wpa
+  case $beacontype in
+    Basic)
+      case $wepencrypt in
+        None)
+          wlwep=disabled; wlauth=0;;
+        WEP-Open)
+          wlwep=enabled; wlauth=0; wpsen=0;;
+        WEP-PSK)
+          wlwep=enabled; wlauth=1; wpsen=0;;
+        WEP-AUTO)
+          wlwep=enabled; wlauth=0; wpsen=0;;
+      esac
+      ;;
+    WPA)
+      wlauthmode='psk'; wlwpa='tkip'; wpsen=0;;
+    WPA2)
+      wlauthmode='psk2'; wlwpa='aes';;
+    *)
+      # WPA-Auto or default
+      # Not sure we need this really old stuff ...
+      # the option is different regarding the driver version
+      if wlctl ver | grep 4.174.64.19.cpe4.402.1; then
+        wlauthmode='psk2mix'
+      else
+        wlauthmode='psk psk2'
+      fi
+      wlwpa='tkip+aes'
+      ;;
+  esac
+# do not need to parse wpaencrypt
+#   case $wpaencrypt in
+#     TKIP)
+#       wlwpa=tkip;;
+#     AES)
+#       wlwpa=aes;;
+#     Auto)
+#       wlwpa=tkip+aes;;
+#   esac
+  ssid_conf_set wlWep $wlwep;
+  ssid_conf_set wlAuth $wlauth;
+  ssid_conf_set wlAuthMode "$wlauthmode";
+  ssid_conf_set wlWpa $wlwpa;
+
+  # Erase all WEP Keys
+  local i; for i in 1 2 3 4; do
+    ssid_conf_set wlKey64_$i ""
+    ssid_conf_set wlKey128_$i ""
+  done
+  # Set the good WEP key
+  local idx; eval idx=\${'WLANInterface_'$ETHID'_Config_WEPKeyIndex':-1}
+  local wepkey; eval wepkey=\${'WLANInterface_'$ETHID'_Config_WEPKey'$idx'':-}
+  wepkey=$( base_get_password $wepkey )
+  i=$(($idx - 1))
+  [ ${#wepkey} = 5 ] || [ ${#wepkey} = 10 ] && ssid_conf_set wlKey64_$idx $wepkey && ssid_conf_set wlKeyBit 1 && ssid_conf_set wlKeyIndex64 $i
+  [ ${#wepkey} = 13 ] || [ ${#wepkey} = 26 ] && ssid_conf_set wlKey128_$idx $wepkey && ssid_conf_set wlKeyBit 0 && ssid_conf_set wlKeyIndex128 $i
+
+  # Select MaxBitRate
+  local maxrate; eval maxrate=\${'WLANInterface_'$ETHID'_Config_MaxBitRate':-0}
+  [ "$maxrate" = 'Auto' ] && maxrate=0
+  maxrate=`echo $maxrate | sed -e 's~M~~'`
+  [ "$ETHID" = '1' ] && wl_conf_set wlRate $maxrate
+
+  # Rekeying period
+  local rekey; eval rekey=\${'WLANInterface_'$ETHID'_Config_RekeyingPeriod':-0}
+  ssid_conf_set wlWpaGTKRekey $rekey
+
+  # WPA KEY
+  local key; eval key=\${'WLANInterface_'$ETHID'_Config_WPADefaultKey':-}
+  key=$( base_get_password $key )
+  ssid_conf_set wlWpaPsk "$key"
+
+  # SSID
+  local ssid; eval ssid=\${'WLANInterface_'$ETHID'_Config_SSID':-}
+  ssid_conf_set wlSsid "$ssid"
+
+  # WMM
+  # User should not be able to do WMM configuration OFF when Wireless mode is 802.11n
+  local standard; standard=${WLANConfig_Standard:-Auto};
+  # 11n must not be used in wep and wpa, force mode bg
+  if [ "$standard" = 'Auto' ] || [ "$standard" = '11bgn' ] || [ "$standard" = '11gn' ] || [ "$standard" = '11n' ]; then
+    if [ "$beacontype" = 'WPA' ]; then
+      standard='11bg';
+    elif [ "$beacontype" = 'Basic' ] && [ "$wepencrypt" != 'None' ]; then
+      standard='11bg';
+    fi
+  fi
+
+  local wmmen; eval wmmen=\${'WLANInterface_'$ETHID'_WMMEnable':-0}
+  if [ "$standard" = '11n' ] && [ "$wmmen" != '1' ]; then
+    # User should not be able to do WMM configuration OFF when Wireless mode is 802.11n
+    wmmen=1
+  fi
+    
+  if [ "$wmmen" = '1' ]; then
+    [ "$ETHID" = '1' ] && wl_conf_set wlWme $wmmen
+    ssid_conf_set wlDisableWme 0
+  else
+    [ "$ETHID" = '1' ] && wl_conf_set wlWme $wmmen
+    ssid_conf_set wlDisableWme 1
+  fi
+  local wmmpsen; eval wmmpsen=\${'WLANInterface_'$ETHID'_WMMPSEnable':-0}
+  [ "$ETHID" = '1' ] && wl_conf_set wlWmeApsd $wmmpsen
+  
+  if [ "$ETHID" = '1' ]; then
+    wl_conf_set wlNMcsidx -1
+    wl_conf_set wlStbcTx -1
+    wl_conf_set wlRegMode 2
+  fi
+  ssid_conf_set wlWscRestart Y
+
+  # WPS
+  if [ "$wpsen" = '1' ] && [ "$hidessid" = '0' ]; then
+    local wpspin; eval wpspin=\${'WLANInterface_'$ETHID'_Config_WPSPINCode':-}
+    local wpsmethod; eval wpsmethod=\${'WLANInterface_'$ETHID'_WPSMethod':-PBC}
+    if [ "$wpsmethod" = 'PIN' ]; then
+      ssid_conf_set wlWscConfig "client-pin"
+      ssid_conf_set wlWscStaPin "$wpspin"
+    else
+      ssid_conf_set wlWscConfig "client-pbc"
+    fi
+    ssid_conf_set wsc_mode enabled
+    ssid_conf_set wsc_config_state 1
+  else
+    ssid_conf_set wsc_mode disabled
+    ssid_conf_set wsc_config_state 0
+  fi
+
+  # AP Isolation
+  local apisol; eval apisol=\${'WLANInterface_'$ETHID'_IsolateSTA':-0}
+  ssid_conf_set wlAPIsolation $apisol
+
+  local maxusers; eval maxusers=\${'WLANInterface_'$ETHID'_Config_MaxUsers':-0}
+  if [ "$maxusers" != '0' ]; then
+    ssid_conf_set wlMaxAssoc $maxusers
+    [ "$ETHID" = '1' ] && wl_conf_set wlGlobalMaxAssoc $maxusers
+  else
+    ssid_conf_set wlMaxAssoc ""
+    [ "$ETHID" = '1' ] && wl_conf_set wlGlobalMaxAssoc ""
+  fi
+
+  mkdir -p $INTFD/$ifname
+  touch $INTFD/$ifname/wifi
+  echo `/sbin/macaddr $ifname` >$INTFD/$ifname/macaddr
+
+  # Program the MAC@ Access Control
+  local aclen; eval aclen=\${'WLANInterface_'$ETHID'_ACLEnable':-0}
+  [ "$aclen" = '1' ] && touch $INTFD/$ifname/aclen
+  if [ "$TOP_ARG" = 'restart' ]; then 
+    base_call_initd 'wifiacl'
+  fi
+
+  # Need to scan the LANs to Add or Remove the interface
+  # to the LAN bridge if this interface belongs to it.
+  local lanid; for lanid in `ls $LAND`; do
+    local intf; for intf in `cat $LAND/$lanid/intfs`; do
+    if [ "$intf" = "$ifname" ]; then
+      local LANID=$lanid
+      local ETHNAME=$ifname
+      base_call_initd 'lanif'
+    fi
+    done
+  done
+  
+  # Launch wl manager - only after bridging is done
+  rm -f $WIFID/nowlmngr
+#   base_log "lib/wifi: start_vendor_wifi launch wlmanager" debug
+  /bin/wlmngr 2>&1 1>/dev/null
+
+  # Radio control
+  local radioctl=off
+  if [ "${WLANConfig_RadioEnable:-0}" = '1' ]; then
+    radioctl=on
+  fi
+  wlctl radio $radioctl
+  
+  # Remove wifi_boot file
+  rm -f $WIFID/wifi_boot
+}
+
+restart_vendor_wifiacl() {
+#   base_log "lib/wifi: restart_vendor_wifiacl ifname=$ifname adapter=$ETHID (init=$BCMINITRUNNING)" debug
+  if [ "$BCMINITRUNNING" = '1' ]; then
+    return
+  fi
+  rm -f $INTFD/$ifname/aclen
+  rm -f $WIFID/flt$ETHID.conf
+
+  local en; eval en=\${'WLANInterface_'$ETHID'_Enable':-0}
+  if [ "$en" = '1' ]; then
+    local aclen; eval aclen=\${'WLANInterface_'$ETHID'_ACLEnable':-0}
+    if [ "$aclen" = '1' ]; then
+      ssid_conf_set wlFltMacMode allow
+      touch $INTFD/$ifname/aclen
+      local lanid; for lanid in `ls $LAND`; do
+        local intf; for intf in `cat $LAND/$lanid/intfs`; do
+          if [ "$intf" = "$ifname" ] && [ -f $LAND/$lanid/macacl ]; then
+            cp $LAND/$lanid/macacl $WIFID/flt$ETHID.conf
+          fi
+        done
+      done
+    else
+      ssid_conf_set wlFltMacMode disabled
+      rm -f $WIFID/flt$ETHID.conf
+    fi
+  fi
+  #ssid_conf_set wlWscRestart Y
+  # Launch wl manager
+  if [ ! -f $WIFID/nowlmngr ]; then
+#     base_log "lib/wifi: restart_vendor_wifiacl launch wlmanager" debug
+    /bin/wlmngr 2>&1 1>/dev/null
+  fi
+
+  # Reload pairingd settings
+  reload_pairingd
+}
+
+stop_vendor_lanacl() {
+#   base_log "lib/wifi: stop_vendor_lanacl LANID=$LANID (init=$BCMINITRUNNING)" debug
+  if [ "$BCMINITRUNNING" = '1' ]; then
+    return
+  fi
+  rm -rf $LAND/$LANID/macacl
+
+  local i=0; while [ $i -lt ${WLANInterface_Count:-0} ]; do
+    i=$(($i + 1))
+    local ARG=restart
+    local ETHID=$i
+    base_call_initd 'wifiacl'
+  done
+
+  # Reload pairingd settings
+  reload_pairingd
+}
+
+start_vendor_lanacl() {
+#   base_log "lib/wifi: start_vendor_lanacl LANID=$LANID (init=$BCMINITRUNNING)" debug
+  if [ "$BCMINITRUNNING" = '1' ]; then
+    return
+  fi
+  local landev; landev='LANDevice_'$LANID
+  local list; eval list=\${$landev'_AccessControl_List':-empty}
+  local i
+
+  # Build the Access Control List for network interfaces
+  if [ "$list" != 'empty' ]; then
+    local acl=''
+    for i in `strip $list`; do
+      local macen; eval macen=\${$landev'_AccessControl_'$i'_Enable':-0}
+      local macaddr; eval macaddr=\${$landev'_AccessControl_'$i'_MACAddress':-}
+      if [ "$macen" = '1' ] && [ "$macaddr" != '' ]; then
+        if [ "$acl" = '' ]; then
+          acl="$macaddr"
+        else
+          acl="$acl\n$macaddr"
+        fi
+      fi
+    done
+    if [ "$acl" != '' ]; then
+      echo $acl >$LAND/$LANID/macacl
+    fi
+  fi
+
+  touch $WIFID/nowlmngr
+  i=0; while [ $i -lt ${WLANInterface_Count:-0} ]; do
+    i=$(($i + 1))
+    local lanwlen; eval lanwlen=\${$landev'_WLANInterface_'$i'_Enable':-0}
+    if [ "$lanwlen" = '1' ]; then
+      local ARG=restart
+      local ETHID=$i
+      base_call_initd 'wifiacl'
+    fi
+  done
+  rm -f $WIFID/nowlmngr
+
+  # Speed up at first start
+  if [ "$TOP_ARG" = 'start' ]; then
+    local last_lanid_enabled=0
+    i=${LANDevice_Count:-0}; while [ $i -gt 0 ]; do
+      local en; eval en=\${'LANDevice_'$i'_Enable':-0}
+      [ "$en" = '1' ] && last_lanid_enabled=$i && break
+      i=$(($i - 1))
+    done
+    # Launch wl manager
+    if [ "$last_lanid_enabled" = "$LANID" ]; then
+#       base_log "lib/wifi: start_vendor_lanacl launch wlmanager" debug
+      /bin/wlmngr 2>&1 1>/dev/null
+    fi
+  else
+    # Launch wl manager
+#     base_log "lib/wifi: start_vendor_lanacl launch wlmanager" debug
+    /bin/wlmngr 2>&1 1>/dev/null
+  fi
+}
+
+
+restart_vendor_wificom() {
+#   base_log "lib/wifi: restart_vendor_wificom (init=$BCMINITRUNNING)" debug
+  if [ "$BCMINITRUNNING" = '1' ]; then
+    return
+  fi
+  # Set 802.11 standard
+  # Select first enabled WiFi interface
+  local i en ifen=''
+  i=0; while [ $i -lt ${WLANInterface_Count:-0} ]; do
+    i=`expr $i + 1`
+    eval en=\${'WLANInterface_'$i'_Enable':-0}
+    [ "$en" = '1' ] && eval ifen=\${'WLANInterface_'$i'_Ifname':-} && break
+  done
+  if [ -z "${ifen:-}" ]; then
+    return
+  fi
+  local ETHID=$i
+  local ifname=$ifen
+
+  wlctl down
+  local beacontype; eval beacontype=\${'WLANInterface_'$ETHID'_Config_BeaconType':-Basic}
+  local wepencrypt; eval wepencrypt=\${'WLANInterface_'$ETHID'_Config_WEPEncryption':-None}
+  local standard; standard=${WLANConfig_Standard:-Auto};
+  # 11n must not be used in wep and wpa, force mode bg
+  if [ "$standard" = 'Auto' ] || [ "$standard" = '11bgn' ] || [ "$standard" = '11gn' ] || [ "$standard" = '11n' ]; then
+    if [ "$beacontype" = 'WPA' ]; then
+      standard='11bg';
+    elif [ "$beacontype" = 'Basic' ] && [ "$wepencrypt" != 'None' ]; then
+      standard='11bg';
+    fi
+  fi
+  case $standard in
+    11bg)
+      wl_conf_set wlBand 2
+      wl_conf_set wlgMode 1
+      wl_conf_set wlNmode off
+      wl_conf_set wlNReqd 0
+      ;;
+    11b)
+      wl_conf_set wlBand 2
+      wl_conf_set wlgMode 0
+      wl_conf_set wlNmode off
+      wl_conf_set wlNReqd 0
+      ;;
+    11a)
+      wl_conf_set wlBand 0
+      wl_conf_set wlgMode 1
+      wl_conf_set wlNmode off
+      wl_conf_set wlNReqd 0
+      ;;
+    11g)
+      wl_conf_set wlBand 2 
+      wl_conf_set wlgMode 4 # Performance ???
+      wl_conf_set wlNmode off
+      wl_conf_set wlNReqd 0
+      ;;
+    11n)
+      wl_conf_set wlBand 2
+      wl_conf_set wlgMode 1
+      wl_conf_set wlNmode 1
+      wl_conf_set wlNReqd 1
+      ;;
+    11gn)
+      wl_conf_set wlBand 2
+      wl_conf_set wlgMode 4
+      wl_conf_set wlNmode 1
+      wl_conf_set wlNReqd 0
+      ;;
+    11an)
+      wl_conf_set wlBand 0
+      wl_conf_set wlgMode 1
+      wl_conf_set wlNmode 1
+      wl_conf_set wlNReqd 0
+      ;;
+    *)
+      # Auto, 11bgn, default
+      wl_conf_set wlBand 2
+      wl_conf_set wlgMode 1
+      wl_conf_set wlNmode 1
+      wl_conf_set wlNReqd 0
+      ;;
+  esac
+  
+  # Take care about wlNBwCap value, used to set 'wl mimo_bw_cap' and not 'wl bw_cap 2g' !
+  #define WL_N_BW_20ALL               0
+  #define WL_N_BW_40ALL               1
+  #define WL_N_BW_20IN2G_40IN5G       2
+  #define WL_V_BW_80IN5G              3
+  local bw=${WLANConfig_Bandwidth:-20}
+  case $bw in
+  20)
+    wl_conf_set wlNBw 20
+    wl_conf_set wlNBwCap 0
+    wl_conf_set wlObssCoex 0
+    ;;
+  *)
+    # 40, Auto, default
+    wl_conf_set wlNBw 40
+    wl_conf_set wlNBwCap 1
+    # unfortunately we cannot set coex=1, else no 40
+    wl_conf_set wlObssCoex 0
+    ;;
+  esac
+  
+  # Program the Beacon Interval
+  local bintval; bintval=${WLANConfig_BeaconInterval:-100}
+  wl_conf_set wlBcnIntvl $bintval
+
+  # Change Channel
+  local channelval; channelval=${WLANConfig_Channel:-0}
+  wl_conf_set wlChannel $channelval
+  if [ "$channelval" = "0" ] || [ "$bw" = "20" ]; then
+    wl_conf_set wlNCtrlsb 0
+  elif [ $channelval -ge 1 -a $channelval -le 9 ]; then
+    wl_conf_set wlNCtrlsb -1
+  else
+    wl_conf_set wlNCtrlsb 1
+  fi
+  # Percent
+  local TxPower; TxPower=${WLANConfig_TxPower:-100}
+  wl_conf_set wlTxPwrPcnt $TxPower
+
+
+  # Diversity management
+  local txant rxant
+  if [ "${WLANConfig_DiversityEnable:-1}" = '1' ]; then
+    txant=3
+    rxant=3
+  else
+    if [ "${WLANConfig_TxAntenna:-Auto}" = 'Ant1' ]; then
+      txant=0
+    elif [ "${WLANConfig_TxAntenna:-Auto}" = 'Ant2' ]; then
+      txant=1
+    else
+      txant=3
+    fi
+    if [ "${WLANConfig_RxAntenna:-Auto}" = 'Ant1' ]; then
+      rxant=0
+    elif [ "${WLANConfig_RxAntenna:-Auto}" = 'Ant2' ]; then
+      rxant=1
+    else
+      rxant=3
+    fi
+  fi
+  wlctl txant $txant
+  wl_conf_set wlAntDiv $rxant
+  ssid_conf_set wlWscRestart Y
+  # Launch wl manager
+  if [ ! -f $WIFID/nowlmngr ]; then
+#     base_log "lib/wifi: restart_vendor_wificom launch wlmanager" debug
+    /bin/wlmngr 2>&1 1>/dev/null
+  fi
+
+  # Reload pairingd settings
+  reload_pairingd
+}
+
+
+restart_vendor_wificountry() {
+#   base_log "lib/wifi: restart_vendor_wificountry (init=$BCMINITRUNNING)" debug
+  if [ "$BCMINITRUNNING" = '1' ]; then
+    return
+  fi
+  local country_str=`sed /etc/bewan/config.default/ISO_3166-1_numeric -n -e "s/^${WLANConfig_Country:-250} \(.*\)$/\1/p"`
+
+  wl_conf_set wlCountry $country_str
+  ssid_conf_set wlWscRestart Y
+  # Launch wl manager
+  if [ ! -f $WIFID/nowlmngr ]; then
+#     base_log "lib/wifi: restart_vendor_wificountry launch wlmanager" debug
+    /bin/wlmngr 2>&1 1>/dev/null
+  fi
+}
+
+
+restart_vendor_wpspincode() {
+#   base_log "lib/wifi: restart_vendor_wpspincode adapter=$ETHID (init=$BCMINITRUNNING)" debug
+  if [ "$BCMINITRUNNING" = '1' ]; then
+    return
+  fi
+ # Reload pairingd settings
+  reload_pairingd
+  
+  local hidessid; eval hidessid=\${'WLANInterface_'$ETHID'_Config_HideSSID':-0}
+  local wpsen; eval wpsen=\${'WLANInterface_'$ETHID'_WPSEnable':-0}
+  local wpspin; eval wpspin=\${'WLANInterface_'$ETHID'_Config_WPSPINCode':-}
+  local wpsmethod; eval wpsmethod=\${'WLANInterface_'$ETHID'_WPSMethod':-PBC}
+  if [ "$wpsen" = '1' ] && [ "$hidessid" = '0' ]; then
+    if [ "$wpsmethod" = 'PIN' ]; then
+      ssid_conf_set wlWscConfig "client-pin"
+      ssid_conf_set wlWscStaPin "$wpspin"
+      if [ "$wpspin" != "" ]; then
+        echo "PAIRINGD_WIFI_WPS_START $wpspin" > $WIFID/pairingd_fifo
+      fi
+      ssid_conf_set wsc_mode enabled
+      ssid_conf_set wsc_config_state 1
+      ssid_conf_set wlWscRestart N
+#       base_log "restart_vendor_wpspincode: launching wl manager " debug
+      # Launch wl manager
+      /bin/wlmngr 2>&1 1>/dev/null
+    fi
+  fi
+}
+
+restart_vendor_wifiradio() {
+#   base_log "lib/wifi: restart_vendor_wifiradio (init=$BCMINITRUNNING)" debug
+  if [ "$BCMINITRUNNING" = '1' ]; then
+    return
+  fi
+  # LED management
+  local led_cfg_file=/etc/bewan/config.default/wifi_led.cfg
+  # Force ETHID to main interface id
+  local ETHID=`cat $led_cfg_file | grep led_main_interface_id | cut -d'=' -f2`
+
+  if [ "${WLANConfig_RadioEnable:-0}" = '1' ]; then
+    wlctl radio on
+    # Refresh LED states
+    if [ "${WLANConfig_EasyPairing:-0}" = '0' ]; then
+      wifi_led_ctrl
+    else
+      # Force LED mgmt for a faster LED mgmt (only if EasyPairing isn't running)
+      [ ! -f /var/run/pairingd.pid ] && wifi_led_ctrl
+      if [ ! -f $WIFID/wifionoff ] && [ ! -f $WIFID/wifiwps ]; then
+        refresh_leds
+      fi
+    fi
+  else
+    wlctl radio off
+    # Refresh LED states
+    if [ "${WLANConfig_EasyPairing:-0}" = '0' ]; then
+      wifi_led_ctrl
+    else
+      [ ! -f $WIFID/wifionoff ] && refresh_leds_off
+    fi
+  fi
+
+  # Reload pairingd settings
+  reload_pairingd
+}

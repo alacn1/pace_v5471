@@ -1,0 +1,4 @@
+#!/bin/sh
+
+base_log "S10wlmngr-init: unlock wifi setting" debug
+base_exit_critical 'bcmwl-init'

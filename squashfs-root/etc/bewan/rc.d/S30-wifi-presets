@@ -1,0 +1,41 @@
+#!/bin/sh
+
+set_wifi_presets() {
+  local country en ifname vap
+  local macaddr macoff
+
+#  base_log "S30-wifi-presets WLANConfig_Country=$WLANConfig_Country WLANInterface_Count=$WLANInterface_Count" debug
+  
+  country=`sed /etc/bewan/config.default/ISO_3166-1_numeric -n -e "s/^${WLANConfig_Country:-250} \(.*\)$/\1/p"`
+
+  local i=0; while [ $i -lt ${WLANInterface_Count:-0} ]; do
+    i=$(($i + 1))
+    eval en=\${'WLANInterface_'$i'_Enable':-0}
+    eval ifname=\${'WLANInterface_'$i'_Ifname':-}
+    if [ ! -z "${ifname:-}" ]; then
+      vap=`echo $ifname | cut -d'.' -f2`
+      # Process only primary interfaces
+      if [ "$vap" = "$ifname" ]; then
+        # Set primary interface mac address for wlmngr to learn it from the system
+        macaddr=`pzinfo lanmac`
+        eval macoff=\${'WLANInterface_'$i'_MacOffset':-0}
+        local j; for j in `strip $macoff`; do
+          macaddr=`macoffset $j $macaddr`
+        done
+#        base_log "Set $ifname mac address $macaddr" debug
+        /sbin/ifconfig $ifname hw ether $macaddr
+      
+        # Set country to allow UI to display the available channels correctly even if radio is disabled
+        if [ -n "${country}" ]; then
+#          base_log "Set $ifname regulatory domain $country" debug
+          wl -i $ifname country $country
+        fi
+        # stop looping into WIFI Interfaces
+        break
+      fi
+    fi
+  done
+}
+
+#base_log "Enter S30-wifi-presets" debug
+set_wifi_presets
