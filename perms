@@ -204,6 +204,8 @@ drwxr-xr-x squashfs-root/etc/bewan/iad/en_US/admin
 -r--r--r-- squashfs-root/etc/bewan/iad/en_US/admin/admin_password.htm
 -r--r--r-- squashfs-root/etc/bewan/iad/en_US/admin/auth.htm
 -r--r--r-- squashfs-root/etc/bewan/iad/en_US/admin/bb_stats.htm
+-r--r--r-- squashfs-root/etc/bewan/iad/en_US/admin/changelog.htm
+-r--r--r-- squashfs-root/etc/bewan/iad/en_US/admin/config_advanced.htm
 -r--r--r-- squashfs-root/etc/bewan/iad/en_US/admin/config_apps.htm
 -r--r--r-- squashfs-root/etc/bewan/iad/en_US/admin/config_firewall.htm
 -r--r--r-- squashfs-root/etc/bewan/iad/en_US/admin/config_internet.htm
@@ -211,6 +213,7 @@ drwxr-xr-x squashfs-root/etc/bewan/iad/en_US/admin
 -r--r--r-- squashfs-root/etc/bewan/iad/en_US/admin/config_usb.htm
 -r--r--r-- squashfs-root/etc/bewan/iad/en_US/admin/config_wan_mode.htm
 -r--r--r-- squashfs-root/etc/bewan/iad/en_US/admin/config_wireless.htm
+-r--r--r-- squashfs-root/etc/bewan/iad/en_US/admin/firmware.htm
 -r--r--r-- squashfs-root/etc/bewan/iad/en_US/admin/index.htm
 -r--r--r-- squashfs-root/etc/bewan/iad/en_US/admin/languages.htm
 -r--r--r-- squashfs-root/etc/bewan/iad/en_US/admin/license.html
@@ -304,6 +307,8 @@ drwxr-xr-x squashfs-root/etc/bewan/iad/pt_BR/admin
 -r--r--r-- squashfs-root/etc/bewan/iad/pt_BR/admin/admin_password.htm
 -r--r--r-- squashfs-root/etc/bewan/iad/pt_BR/admin/auth.htm
 -r--r--r-- squashfs-root/etc/bewan/iad/pt_BR/admin/bb_stats.htm
+-r--r--r-- squashfs-root/etc/bewan/iad/pt_BR/admin/changelog.htm
+-r--r--r-- squashfs-root/etc/bewan/iad/pt_BR/admin/config_advanced.htm
 -r--r--r-- squashfs-root/etc/bewan/iad/pt_BR/admin/config_apps.htm
 -r--r--r-- squashfs-root/etc/bewan/iad/pt_BR/admin/config_firewall.htm
 -r--r--r-- squashfs-root/etc/bewan/iad/pt_BR/admin/config_internet.htm
@@ -311,6 +316,7 @@ drwxr-xr-x squashfs-root/etc/bewan/iad/pt_BR/admin
 -r--r--r-- squashfs-root/etc/bewan/iad/pt_BR/admin/config_usb.htm
 -r--r--r-- squashfs-root/etc/bewan/iad/pt_BR/admin/config_wan_mode.htm
 -r--r--r-- squashfs-root/etc/bewan/iad/pt_BR/admin/config_wireless.htm
+-r--r--r-- squashfs-root/etc/bewan/iad/pt_BR/admin/firmware.htm
 -r--r--r-- squashfs-root/etc/bewan/iad/pt_BR/admin/index.htm
 -r--r--r-- squashfs-root/etc/bewan/iad/pt_BR/admin/languages.htm
 -r--r--r-- squashfs-root/etc/bewan/iad/pt_BR/admin/license.html
@@ -548,6 +554,7 @@ lrwxrwxrwx squashfs-root/etc/bewan/ip-up.d/S00-0-ipconf
 -rwxr-xr-x squashfs-root/etc/bewan/ip-up.d/S00-rpfilter
 lrwxrwxrwx squashfs-root/etc/bewan/ip-up.d/S01-led
 lrwxrwxrwx squashfs-root/etc/bewan/ip-up.d/S01-led-3g
+-rwxr-xr-x squashfs-root/etc/bewan/ip-up.d/S20-dnsmasq
 -rwxr-xr-x squashfs-root/etc/bewan/ip-up.d/S50-gvtSTB
 -rwxr-xr-x squashfs-root/etc/bewan/ip-up.d/S60-dhcp43
 -rwxr-xr-x squashfs-root/etc/bewan/ip-up.d/S60dyndns
@@ -755,6 +762,7 @@ drwxr-xr-x squashfs-root/etc/bewan/scripts
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/ip-up-dhcp
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/ip-up-lan
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/ip-up-ppp
+-rwxr-xr-x squashfs-root/etc/bewan/scripts/ip-up-ppp_
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/led-3g
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/led-wan
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/led-wan6
@@ -764,6 +772,7 @@ drwxr-xr-x squashfs-root/etc/bewan/scripts
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/ppp-down6
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/ppp-fail6
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/ppp-up6
+-rwxr-xr-x squashfs-root/etc/bewan/scripts/ppp-up6_
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/printer-update
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/reset_dsl_stats
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/restricted_shell
@@ -892,6 +901,7 @@ drwxrwxr-x squashfs-root/home/diag/bin
 -rwxr-xr-x squashfs-root/home/diag/bin/ash
 -rwxr-xr-x squashfs-root/home/diag/bin/cli
 -rwxr-xr-x squashfs-root/home/diag/bin/ifconfig
+-rwxr-xr-x squashfs-root/home/diag/bin/ip
 -rwxr-xr-x squashfs-root/home/diag/bin/lsmod
 -rwxr-xr-x squashfs-root/home/diag/bin/netstat
 -rwxr-xr-x squashfs-root/home/diag/bin/ping
@@ -1014,10 +1024,12 @@ lrwxrwxrwx squashfs-root/home/diag/lib/libip6tc.so.0
 lrwxrwxrwx squashfs-root/home/diag/lib/libiptc.so
 lrwxrwxrwx squashfs-root/home/diag/lib/libiptc.so.0
 -rwxr-xr-x squashfs-root/home/diag/lib/libiptc.so.0.0.0
+-rwxr-xr-x squashfs-root/home/diag/lib/libiputil.so
 -rwxr-xr-x squashfs-root/home/diag/lib/libm-0.9.30.3.so
 -rwxr-xr-x squashfs-root/home/diag/lib/libm.so
 -rwxr-xr-x squashfs-root/home/diag/lib/libm.so.0
 -rwxr-xr-x squashfs-root/home/diag/lib/libmtd.so
+-rwxr-xr-x squashfs-root/home/diag/lib/libnetlink.so
 -rwxr-xr-x squashfs-root/home/diag/lib/libnsl-0.9.30.3.so
 -rwxr-xr-x squashfs-root/home/diag/lib/libnsl.so
 -rwxr-xr-x squashfs-root/home/diag/lib/libnsl.so.0

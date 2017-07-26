@@ -1,0 +1,97 @@
+#!/bin/sh
+#
+# This script is run by pppd after the link is established.
+
+# Environnement variables:
+
+#  IFNAME:    $1, interface name (pppi)
+#  DEVICE:    $2, device name (see below)
+#  IPLOCAL:   $4, IP address
+#  IPREMOTE:  $5, Remote IP address
+#  IPPARAM:   $6, Any additional params if any
+#  PPPMTU:    $7, Negotiated MTU size
+
+# DEVICE can be:
+
+# /dev/ttyUSBx -> serial interface
+# empty -> PPP over VPN
+# vpi.vci -> PPP over ATM
+
+IFNAME=${1:-}
+DEVICE=${2:-}
+IPLOCAL=${4:-}
+IPREMOTE=${5:-}
+PPPMTU=${7:-}
+
+. /etc/bewan/scripts/globals
+. /etc/bewan/lib/base
+
+base_log "$SCRIPTD/ip-up-ppp $IFNAME $DEVICE $IPLOCAL-$IPREMOTE $PPPMTU" debug
+
+# PPP up on WAN interface
+[ ! -f "$INTFD/$IFNAME/wanid" ] && exit 0
+WANID=$(cat $INTFD/$IFNAME/wanid)
+
+# Take wan-up-down mutex
+base_enter_critical 'wan-up-down'
+
+# Get config parameters after taking lock
+base_call_initd 'setparam'
+
+# Build environment variables needed for main ip-up script
+IPADDR=$IPLOCAL
+SMASK='255.255.255.255'
+# Variables set from ip-up-dhcp
+ROUTERS=''
+DHCPSRV=''
+DOMAIN=''
+# DNS servers
+SERVERS=''
+
+[ -f $WAND/$WANID/ip/fakeip ] && echo $IPADDR > $WAND/$WANID/ip/fakeip
+first=0
+
+for item in `cat /etc/ppp/resolv.conf 2>/dev/null`; do
+  [ "$item" = 'nameserver' ] && continue
+  SERVERS="$SERVERS $item"
+  if [ "$first" = "0" ]; then
+      #optimize the dns request, but not necessary
+      [ -f $WAND/$WANID/ip/fakednsserver ] && echo $item > $WAND/$WANID/ip/fakednsserver
+      first=1
+  fi
+done
+
+if [ -d $WAND/$WANID/ip ]; then
+  [ "$PPPMTU" != '' ] && echo $PPPMTU > $WAND/$WANID/ip/mtu_negotiated
+fi
+
+
+# Continues with main ip-up script
+base_call_scripts 'ip-up'
+
+# Release wan-up-down mutex
+base_exit_critical 'wan-up-down'
+
+
+
+# Alacn, 2017-01-26
+# pppd doesn't call ppp-up6 on reconnect
+if [ -f /var/run/ppp-$IFNAME.pid ] &&
+  [ -f $WAND/$WANID/ppp4.pid ] &&
+  [ -f $WAND/$WANID/ppp6.pid ]
+then
+  local pid=`cat /var/run/ppp-$IFNAME.pid`
+  local pid4=`cat $WAND/$WANID/ppp4.pid`
+  local pid6=`cat $WAND/$WANID/ppp6.pid`
+
+  # did up4 && up6 ?
+  if [ ! -z "$pid" ] && [ "$pid" = "$pid4" ] && [ "$pid" = "$pid6" ]
+  then
+    base_log "$SCRIPTD/ip-up-ppp alacn fix: calling ppp-up6" debug
+    . $SCRIPTD/ppp-up6_
+  fi
+fi
+if [ -f /var/run/ppp-$IFNAME.pid ]; then
+  cat /var/run/ppp-$IFNAME.pid >$WAND/$WANID/ppp4.pid
+fi
+

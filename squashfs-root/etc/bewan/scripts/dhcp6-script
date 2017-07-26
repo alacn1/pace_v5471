@@ -16,9 +16,15 @@ local WANID=`cat $INTFD/$IFNAME/wanid`
 
 do_dhcp6_up_down() {
 
+  # Alacn, 2018-01-28
+  base_log "$SCRIPTD/dhcp6-script $IFNAME $REASON dns ${new_domain_name_servers:-} dhcp ${DHCPSRV:-} iana ${new_ianas:-} iapd ${new_iapds:-}" debug
+
   case "$REASON" in
     REQUEST)
-      base_log "$SCRIPTD/dhcp6-script $IFNAME $REASON dns ${new_domain_name_servers:-} dhcp ${DHCPSRV:-}" debug
+      #base_log "$SCRIPTD/dhcp6-script $IFNAME $REASON dns ${new_domain_name_servers:-} dhcp ${DHCPSRV:-}" debug
+
+      # Alacn, 2018-01-28: all empty? skip
+      [ -z "${new_domain_name_servers:-}" ] && [ -z "${new_ianas:-}" ] && [ -z "${new_iapds:-}" ] && return
 
       # Take wan-up-down mutex
       base_enter_critical 'wan-up-down'
@@ -70,7 +76,7 @@ do_dhcp6_up_down() {
       base_exit_critical 'wan-up-down'
     ;;
     RELEASE)
-      base_log "$SCRIPTD/dhcp6-script $IFNAME $REASON dns ${new_domain_name_servers:-} dhcp ${DHCPSRV:-}" debug
+      #base_log "$SCRIPTD/dhcp6-script $IFNAME $REASON dns ${new_domain_name_servers:-} dhcp ${DHCPSRV:-}" debug
 
       if [ -f $WAND/$WANID/ip6/dhcp6-env ]; then
         # Take wan-up-down mutex

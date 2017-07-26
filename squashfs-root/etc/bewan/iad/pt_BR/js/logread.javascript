@@ -282,7 +282,39 @@ var Page = (function($, App) {
     return {
         init: function(data) {
             var next = $("#next"), prev = $("#prev"), logs = $("#logsRaw"), selModules = $("#logModule"), allMods;
-         
+
+            function parseLogsRaw(logsRaw) {
+                logsRaw = logsRaw.split('|').join('\n');
+                // create the log analyser and group all logs
+                logAnalyzer = LogAnalyzer(logsRaw);
+                allMods = logAnalyzer.getModules();
+                // create a paginator for pagination with default logs for syslog module
+                paginator = Paginator(logAnalyzer.getLogs(), 40);
+
+                console.log("Found log modules: " + allMods);
+            
+                // append all the available modules to the module select widget
+                util.forEach(allMods, function(mod) {
+                    selModules.append("<option value='" + mod + "'>" + mod + "</option>");
+                });
+                selModules.val("all");
+                    
+                paginatorWidget = $.DataList("#paginator", {
+                    listClass: "pages",
+                    itemClass: "page-num",
+                    data: paginator.getPageNumList(),
+                    render: function(widget, li, liIdx, arrItem) {
+                        li.html("<span class='trigger'>" + (liIdx + 1) + "</span>");
+                    },
+                    onselectionchange: function() {
+                        var itm = paginatorWidget.getSelectedItem(), pgNo = itm.data("model");
+                        goToPage(pgNo);
+                    }
+                });
+
+                showLogs();
+            }
+
             logs.val("");
             config = ConfigAccess(data.token);
             config.fct("logread");
@@ -291,39 +323,17 @@ var Page = (function($, App) {
                     alert(resp.error);
                 }else {
                     logsRaw = resp.logread;
-                    logsRaw = logsRaw.split('|').join('\n');
-                    // create the log analyser and group all logs
-                    logAnalyzer = LogAnalyzer(logsRaw);
-                    allMods = logAnalyzer.getModules();
-                    // create a paginator for pagination with default logs for syslog module
-                    paginator = Paginator(logAnalyzer.getLogs(), 40);
-
-                    console.log("Found log modules: " + allMods);
-                
-                    // append all the available modules to the module select widget
-                    util.forEach(allMods, function(mod) {
-                        selModules.append("<option value='" + mod + "'>" + mod + "</option>");
-                    });
-                    selModules.val("all");
-                        
-                    paginatorWidget = $.DataList("#paginator", {
-                        listClass: "pages",
-                        itemClass: "page-num",
-                        data: paginator.getPageNumList(),
-                        render: function(widget, li, liIdx, arrItem) {
-                            li.html("<span class='trigger'>" + (liIdx + 1) + "</span>");
-                        },
-                        onselectionchange: function() {
-                            var itm = paginatorWidget.getSelectedItem(), pgNo = itm.data("model");
-                            goToPage(pgNo);
-                        }
-                    });
-
-                    showLogs();
+                    parseLogsRaw(logsRaw);
                 }
-            });
-         
-
+            },
+            // Alacn, 2018-02-12: parse log that has quotes "
+            function(xhr) {
+                if(xhr && xhr.responseText) {
+                    m = xhr.responseText.match(/^\s*{\s*"logread"\s*:\s*"(.*)"\s*}\s*$/);
+                    if(m && m[1]) parseLogsRaw(m[1]);
+                }
+            }
+            );
 
             function goToPage(idx) {
                 if(paginator.moveToPage(idx)) {

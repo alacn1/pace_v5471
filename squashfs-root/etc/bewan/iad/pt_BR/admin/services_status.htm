@@ -42,6 +42,7 @@
 				ledTvState:util.parseJson('<!--#echo jsonvar="cli=Device_LedButtons_LedButton_*[Name=tv]_State"-->'),
 				hpna:util.parseJson('<!--#echo jsonvar="cli=HPNA_Enable"-->'),
 				voiceProfile:util.parseJson('<!--#echo jsonvar="cli=VoiceProfile"-->'),
+				IP6Prefix:util.parseJson('<!--#echo jsonvar="cli=LANDevice_1_IPv6Status_CurrentPrefix"-->'),
 			};
 
 			if(!pageData.activeWanConnectionDevice.List) {
@@ -127,6 +128,9 @@
 								<tr><td>Gateway Padrão:</td><td id="remoteIP"></td><tr>
 								<tr><td>DNS primário:</td><td id="primaryDNS"></td><tr>
 								<tr><td>DNS secundário:</td><td id="secondaryDNS"></td><tr>
+								<tr><td>Prefixo IPv6:</td><td id="IP6Prefix"></td><tr>
+								<tr><td>DNSv6 primário:</td><td id="primaryDNS6"></td><tr>
+								<tr><td>DNSv6 secundário:</td><td id="secondaryDNS6"></td><tr>
 							</table>
 						</td>
 					</tr>
