@@ -91,7 +91,6 @@ EOF
     AdvOnLink $link;
     AdvPreferredLifetime $pltime;
     DeprecatePrefix on;
-    DecrementLifetimes on;
   };
 EOF
   }
