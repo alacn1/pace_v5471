@@ -892,6 +892,7 @@ drwxrwxr-x squashfs-root/home/diag/bin
 -rwxr-xr-x squashfs-root/home/diag/bin/ash
 -rwxr-xr-x squashfs-root/home/diag/bin/cli
 -rwxr-xr-x squashfs-root/home/diag/bin/ifconfig
+-rwxr-xr-x squashfs-root/home/diag/bin/ip
 -rwxr-xr-x squashfs-root/home/diag/bin/lsmod
 -rwxr-xr-x squashfs-root/home/diag/bin/netstat
 -rwxr-xr-x squashfs-root/home/diag/bin/ping
@@ -1014,10 +1015,12 @@ lrwxrwxrwx squashfs-root/home/diag/lib/libip6tc.so.0
 lrwxrwxrwx squashfs-root/home/diag/lib/libiptc.so
 lrwxrwxrwx squashfs-root/home/diag/lib/libiptc.so.0
 -rwxrwxr-x squashfs-root/home/diag/lib/libiptc.so.0.0.0
+-rwxr-xr-x squashfs-root/home/diag/lib/libiputil.so
 -rwxr-xr-x squashfs-root/home/diag/lib/libm-0.9.30.3.so
 -rwxr-xr-x squashfs-root/home/diag/lib/libm.so
 -rwxr-xr-x squashfs-root/home/diag/lib/libm.so.0
 -rwxr-xr-x squashfs-root/home/diag/lib/libmtd.so
+-rwxr-xr-x squashfs-root/home/diag/lib/libnetlink.so
 -rwxr-xr-x squashfs-root/home/diag/lib/libnsl-0.9.30.3.so
 -rwxr-xr-x squashfs-root/home/diag/lib/libnsl.so
 -rwxr-xr-x squashfs-root/home/diag/lib/libnsl.so.0
