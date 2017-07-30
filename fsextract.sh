@@ -37,6 +37,13 @@ else
 	echo 'creating .gitkeep ...'
 	find $ROOTFS -empty -type d -exec touch {}/.gitkeep \;
 
+	./permssave.sh
+	RET=$?
+	if [ $RET != 0 ]
+	then
+		exit 1
+	fi
+
 	echo '/ done.'
 fi
 

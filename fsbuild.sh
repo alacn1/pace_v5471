@@ -33,6 +33,13 @@ then
 	rm -f $FNAME
 fi
 
+./permsrestore.sh
+RET=$?
+if [ $RET != 0 ]
+then
+	exit 1
+fi
+
 echo "building $FNAME ..."
 echo '------>>>'
 tput setaf $COLORINFO
