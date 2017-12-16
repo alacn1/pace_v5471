@@ -209,7 +209,10 @@ var Page = (function($, App) {
             publicIP=$("#publicIP"),
             remoteIP=$("#remoteIP"),
             primaryDNS=$("#primaryDNS"),
-            secondaryDNS=$("#secondaryDNS");
+            secondaryDNS=$("#secondaryDNS"),
+            IP6Prefix=$("#IP6Prefix"),
+            primaryDNS6=$("#primaryDNS6"),
+            secondaryDNS6=$("#secondaryDNS6");
         
         downStream.html(data.WANDSLLinkStatus.DownBitrates.Actual);
         upStream.html(data.WANDSLLinkStatus.UpBitrates.Actual);
@@ -221,6 +224,9 @@ var Page = (function($, App) {
         remoteIP.html(activeWanDevice.Status.Remote);
         primaryDNS.html(activeWanDevice.Status.DNSServers.split(',')[0]);
         secondaryDNS.html(activeWanDevice.Status.DNSServers.split(',')[1]);
+        IP6Prefix.html(data.IP6Prefix);
+        primaryDNS6.html(activeWanDevice.Status.DNSv6Servers.split(',')[0]);
+        secondaryDNS6.html(activeWanDevice.Status.DNSv6Servers.split(',')[1]);
         
         switch(netInfo.wan_cnx_type) {
             case cnx_type.xDSL:
