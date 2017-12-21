@@ -109,6 +109,7 @@ EOF
     local servers; eval servers=\${$raconf'_DNS_Servers':-}
     local proxy; eval proxy=\${$raconf'_DNS_Proxy':-0}
     if [ "$proxy" != '1' ]; then
+      [ "$servers" != '' ] && servers=`echo "$servers" | tr ',' ' '`
       [ "$servers" = '' ] && [ -f $LAND/$LANID/ip6/servers ] && servers=`cat $LAND/$LANID/ip6/servers`
       [ "$servers" = '' ] && servers=$lladdr
     else
