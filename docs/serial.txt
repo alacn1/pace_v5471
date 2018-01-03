@@ -1,0 +1,11 @@
+
+vcc 3.3
+tx
+rx
+-
+gnd
+
+
+
+screen /dev/ttyUSB0 115200
+
