@@ -44,3 +44,11 @@ fi
 
 # Release wan-up-down mutex
 base_exit_critical 'wan-up-down'
+
+
+
+# Alacn, 2017-01-26
+if [ -f /var/run/ppp-$IFNAME.pid ]; then
+  cat /var/run/ppp-$IFNAME.pid >$WAND/$WANID/ppp6.pid
+fi
+

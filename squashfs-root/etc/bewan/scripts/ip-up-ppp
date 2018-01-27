@@ -71,3 +71,27 @@ base_call_scripts 'ip-up'
 
 # Release wan-up-down mutex
 base_exit_critical 'wan-up-down'
+
+
+
+# Alacn, 2017-01-26
+# pppd doesn't call ppp-up6 on reconnect
+if [ -f /var/run/ppp-$IFNAME.pid ] &&
+  [ -f $WAND/$WANID/ppp4.pid ] &&
+  [ -f $WAND/$WANID/ppp6.pid ]
+then
+  local pid=`cat /var/run/ppp-$IFNAME.pid`
+  local pid4=`cat $WAND/$WANID/ppp4.pid`
+  local pid6=`cat $WAND/$WANID/ppp6.pid`
+
+  # did up4 && up6 ?
+  if [ ! -z "$pid" ] && [ "$pid" = "$pid4" ] && [ "$pid" = "$pid6" ]
+  then
+    base_log "$SCRIPTD/ip-up-ppp alacn fix: calling ppp-up6" debug
+    . $SCRIPTD/ppp-up6
+  fi
+fi
+if [ -f /var/run/ppp-$IFNAME.pid ]; then
+  cat /var/run/ppp-$IFNAME.pid >$WAND/$WANID/ppp4.pid
+fi
+
