@@ -755,6 +755,7 @@ drwxr-xr-x squashfs-root/etc/bewan/scripts
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/ip-up-dhcp
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/ip-up-lan
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/ip-up-ppp
+-rwxr-xr-x squashfs-root/etc/bewan/scripts/ip-up-ppp_
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/led-3g
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/led-wan
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/led-wan6
@@ -764,6 +765,7 @@ drwxr-xr-x squashfs-root/etc/bewan/scripts
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/ppp-down6
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/ppp-fail6
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/ppp-up6
+-rwxr-xr-x squashfs-root/etc/bewan/scripts/ppp-up6_
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/printer-update
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/reset_dsl_stats
 -rwxr-xr-x squashfs-root/etc/bewan/scripts/restricted_shell
