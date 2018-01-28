@@ -1,12 +1,14 @@
 #!/bin/bash
 
-if [ -z "$1" ]
+FNAME=$1
+ROUTERIP=$2
+USERNAME=$3
+
+if [ -z "$FNAME" ]
 then
-	echo "usage: $0 firmware"
+	echo "usage: $0 firmware.bin [routerip] [username]"
 	exit 1
 fi
-
-FNAME=$1
 
 if [ ! -f "$FNAME" ]
 then
@@ -14,5 +16,15 @@ then
 	exit 1
 fi
 
-curl -H "Expect:" "http://192.168.25.1/cgi-bin/firmware.cgi" -F sFirmwareFile=@$FNAME
+if [ -z "$ROUTERIP" ]
+then
+	ROUTERIP='192.168.25.1'
+fi
+
+if [ ! -z "$USERNAME" ]
+then
+	USERNAME="--digest --user $USERNAME"
+fi
+
+curl -H "Expect:" "http://${ROUTERIP}/cgi-bin/firmware.cgi" -F sFirmwareFile=@"$FNAME" $USERNAME
 
