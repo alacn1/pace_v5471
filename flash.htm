@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Firmware</title>
+<meta charset="utf-8">
+<style>
+html, body, p, th, td, input, select, textarea, label { font-family:DejaVuSans, Arial, sans-serif; font-size:14px; }
+.spinner {
+  display:inline-block;
+  width:40px;
+  height:30px;
+  text-align:center;
+  font-size:12px;
+}
+.spinner .sp1,
+.spinner .sp2,
+.spinner .sp3 {
+  background-color:#333;
+  height:100%;
+  width:6px;
+  display:inline-block;
+  animation: spinnerani 1.0s infinite ease-in-out;
+}
+.spinner .sp2 {
+  animation-delay:-0.9s;
+}
+.spinner .sp3 {
+  animation-delay:-0.8s;
+}
+@keyframes spinnerani {
+  0%, 40%, 100% { transform: scaleY(0.4); }
+  20% { transform: scaleY(1.0); }
+}
+</style>
+<script>
+function displayElement(e, d='block')
+{
+	e = document.getElementById(e);
+	if(!e) return false;
+	e.style.display = d;
+	return true;
+}
+function onFrameLoad()
+{
+	displayElement('divSending', 'none');
+	displayElement('divForm');
+	displayElement('frameFirmware');
+}
+function sendFirmware()
+{
+	var sfile = document.getElementById('sFirmwareFile').value;
+	if((null == sfile) || ('' == sfile)) return false;
+
+	var routerip = document.getElementById('routerip').value;
+	if((null == routerip) || ('' == routerip)) return false;
+	var url = 'http://'+routerip+'/cgi-bin/firmware.cgi';
+
+	var status = document.getElementById('status');
+	var frame = document.getElementById('frameFirmware');
+	var form = document.getElementById('formFirmware');
+
+	status.innerHTML = 'Sending to '+routerip+'...';
+
+	displayElement('frameFirmware', 'none');
+	displayElement('divForm', 'none');
+	displayElement('divSending');
+
+	frame.onload = onFrameLoad;
+
+	form.action = url;
+	form.submit();
+}
+</script>
+</head>
+<body>
+<h1>Firmware Upgrade</h1>
+<p><b>Pace v5471</b></p>
+
+<div id="divForm">
+	<p>Router IP:<br>
+		<input type="text" value="192.168.25.1" id="routerip"></p>
+	<form method="post" enctype="multipart/form-data" target="frameFirmware" id="formFirmware">
+		<p>Firmware:<br>
+			<input type="file" name="sFirmwareFile" id="sFirmwareFile">
+		</p>
+	</form>
+	<p><button onclick="sendFirmware()">Send</button></p>
+</div>
+
+<div style="display:none" id="divSending">
+<p>
+	<span id="status"></span>
+	<span class="spinner" style="vertical-align:middle; display:inline-block">
+		<span class="sp1"></span>
+		<span class="sp2"></span>
+		<span class="sp3"></span>
+	</span>
+</p>
+</div>
+
+<iframe name="frameFirmware" width="100%" height="200" src="" style="border:1px solid #666; display:none" id="frameFirmware"></iframe>
+
+</body>
+</html>
+
