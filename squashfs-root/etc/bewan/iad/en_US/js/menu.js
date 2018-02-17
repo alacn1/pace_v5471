@@ -71,6 +71,7 @@ var menuArr = [
                 '<li id="menu_logread"><a href="logread.htm"><strong>System Logs</strong></a></li>',
                 '<li id="menu_utilities"><a href="net_utils.htm"><strong>Utilities</strong></a></li>',
                 '<li id="menu_firmware"><a href="firmware.htm"><strong>Firmware</strong></a></li>',
+                '<li id="menu_changelog"><a href="changelog.htm"><strong>Changelog</strong></a></li>',
             '</ul>',
         '</li>',
         '<li class="menu" id="menu_about"><a class="menu-header" href="about.htm">About Power Box</a></li>',
