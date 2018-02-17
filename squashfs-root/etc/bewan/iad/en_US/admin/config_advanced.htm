@@ -1,0 +1,302 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<!-- SEO [START] -->
+<meta name="description" content="" />
+<meta name="keywords" content="" />
+<title>GVT</title>
+
+<!-- SEO [END] -->
+
+<link rel="stylesheet" type="text/css" href="../../css/gateway.css"/>
+
+<script type="text/javascript" src="../js/morpheus.min.js"></script>
+<script type="text/javascript" src="../js/menu.js"></script>
+<script type="text/javascript" src="../js/dns.js"></script>
+<script type="text/javascript" src="../js/lite.javascript"></script>
+<script type="text/javascript" src="../js/app.javascript"></script>
+<script type="text/javascript" src="../js/base64.javascript"></script>
+<script type="text/javascript" src="../js/configAccess.javascript"></script>
+
+<!--#isAuth level=admin -->
+<script type="text/javascript">
+var Page = (function($, App) {
+	var data, cli;
+	var util = $.util;
+	var updates = {};
+	var Messages = App.MessageUtil;
+
+	function switchFormatter(val, ctx) {
+		var fld = ctx.field;
+		if(ctx.operation === "read") {
+			return fld.attr("state");
+		}else {
+			fld.attr("state", val);
+			if (val == "0" ) {
+				fld.setStyle({'backgroundPosition': '-34px'});
+			} else {
+				fld.setStyle({'backgroundPosition': '0px'});
+			}
+			return null;
+		}
+	}
+
+	function setupBinders() {
+		configBinder = App.DataBinder({
+			fields: [
+				"Firewall_LogDropped",
+				"WANConnectionDevice_1_Firewall_AllowRemotePing",
+				"WANConnectionDevice_1_Firewall_AttackDetection",
+				"WANConnectionDevice_1_Firewall6_AttackDetection",
+				"HPNA_Enable",
+				"Services_MDNSResponder_Enable",
+				"Services_UpnpTracker_Enable",
+				"Services_TR111_TR111Enable",
+				"VPNInterface_1_Enable",
+				"Voice_Enable",
+				"Conntrack_EnableStatus",
+				"Conntrack_Filter_Enable",
+				"Accelerator_EnableStatus",
+				"QueueManagement_Enable",
+			],
+			formatters: {
+				"Firewall_LogDropped": switchFormatter,
+				"WANConnectionDevice_1_Firewall_AllowRemotePing": switchFormatter,
+				"WANConnectionDevice_1_Firewall_AttackDetection": switchFormatter,
+				"WANConnectionDevice_1_Firewall6_AttackDetection": switchFormatter,
+				"HPNA_Enable": switchFormatter,
+				"Services_MDNSResponder_Enable": switchFormatter,
+				"Services_UpnpTracker_Enable": switchFormatter,
+				"Services_TR111_TR111Enable": switchFormatter,
+				"VPNInterface_1_Enable": switchFormatter,
+				"Voice_Enable": switchFormatter,
+				"Conntrack_EnableStatus": switchFormatter,
+				"Conntrack_Filter_Enable": switchFormatter,
+				"Accelerator_EnableStatus": switchFormatter,
+				"QueueManagement_Enable": switchFormatter,
+			}, 
+		});
+	}
+
+	function initUI() {
+		setupBinders();
+		configBinder.write({
+			data: data
+		});
+
+		$(".switchButton").bind("click", function() {
+			var id = $("#"+this.id);
+			if (id.attr("state") == 0 ) {
+				morpheus(id.elements[0], { duration:300, backgroundPosition: '0px'});
+				id.attr("state", 1);
+			} else {
+				morpheus(id.elements[0], { duration:300, backgroundPosition: '-34px'});
+				id.attr("state", 0);
+			}
+			configBinder.serialize({
+				target: updates,
+			}, this.id);
+		});
+
+		$("#save").bind("click", function() {
+			Messages.clearAll();
+			cli.rollback().write(updates).commit(function(res) {
+				if(res.error) {
+					Messages.error(res.error);
+				}else {
+					updates = {};
+					Messages.info('Configuração salva com sucesso.');
+				}
+			});
+		});
+
+		$("#cancel").bind("click", function() {
+			Messages.clearAll();
+			updates = {};
+			configBinder.write({
+				data: data
+			});
+		});
+	}
+
+	return {
+		init: function(pageData) {
+			data = pageData;
+			cli = ConfigAccess(data.token);
+			
+			initUI();
+		}
+	};
+})(lite, App);
+
+$.event.ready(function() {
+	var util = $.util,
+	token = util.parseJson('<!--#echo jsonvar="token=Firewall,WANConnectionDevice,HPNA,Services,VPNInterface,Voice,Conntrack,Accelerator,QueueManagement"-->'),
+	pageData = {
+		token: token,
+		Firewall: { LogDropped: util.parseJson('<!--#echo jsonvar="cli=Firewall_LogDropped"-->') },
+		WANConnectionDevice: {
+			1: {
+				Firewall: {
+					AllowRemotePing: util.parseJson('<!--#echo jsonvar="cli=WANConnectionDevice_1_Firewall_AllowRemotePing"-->'),
+					AttackDetection: util.parseJson('<!--#echo jsonvar="cli=WANConnectionDevice_1_Firewall_AttackDetection"-->'),
+				},
+				Firewall6: {
+					AttackDetection: util.parseJson('<!--#echo jsonvar="cli=WANConnectionDevice_1_Firewall6_AttackDetection"-->'),
+				},
+			},
+		},
+		HPNA: { Enable: util.parseJson('<!--#echo jsonvar="cli=HPNA_Enable"-->') },
+		Services: {
+			MDNSResponder: { Enable: util.parseJson('<!--#echo jsonvar="cli=Services_MDNSResponder_Enable"-->') },
+			UpnpTracker: { Enable: util.parseJson('<!--#echo jsonvar="cli=Services_UpnpTracker_Enable"-->') },
+			TR111: { TR111Enable: util.parseJson('<!--#echo jsonvar="cli=Services_TR111_TR111Enable"-->') },
+		},
+		VPNInterface: { 1: { Enable: util.parseJson('<!--#echo jsonvar="cli=VPNInterface_1_Enable"-->') } },
+		Voice: { Enable: util.parseJson('<!--#echo jsonvar="cli=Voice_Enable"-->') },
+		Conntrack: {
+			EnableStatus: util.parseJson('<!--#echo jsonvar="cli=Conntrack_EnableStatus"-->'),
+			Filter: { Enable: util.parseJson('<!--#echo jsonvar="cli=Conntrack_Filter_Enable"-->') }
+		},
+		Accelerator: { EnableStatus: util.parseJson('<!--#echo jsonvar="cli=Accelerator_EnableStatus"-->') },
+		QueueManagement: { Enable: util.parseJson('<!--#echo jsonvar="cli=QueueManagement_Enable"-->') },
+	};
+	Page.init(pageData);
+});
+</script>
+<!--#endAuth var=ok-->
+</head>
+
+<body>
+
+<div id="header-gateway">
+
+	<div class="wrap text-right">
+		
+		<a href="http://www.gvt.com.br"><img src="../../img/logo-gvt.png" alt="GVT" class="left" border="0"></a>
+		<img src="../../img/power-box.png" alt="Power Box GVT">
+		<p class="lang-menu"><script type="text/javascript">ImportLanguage();</script></p>
+		
+	</div>
+	
+	<div class="clear"></div>
+	
+</div><!--header-gateway-->
+
+<div id="content">
+<div class="wrap">
+<div id="conteudo-gateway">
+
+<div class="col-192 left">
+	<script type="text/javascript">ImportMenu('menu_advanced');</script>
+</div><!--col-192-->
+
+<!--#isNotAuth level=admin -->
+<div id="level_auth" style="display:none;">admin</div>
+<!--#include file="auth.htm" -->
+<!--#isAuth level=admin -->
+
+<div class="col-722 left" id="col-722">
+
+<h3 class="text-up">Advanced</h3>
+
+<form action="#" class="form-configuracoes">
+
+<table class="setupWifiTable">
+
+<thead>
+	<tr><th colspan="2">Firewall</th></tr>
+</thead>
+<tbody>
+	<tr>
+		<td width="250">Allow Remote Ping:</td>
+		<td><div class="switchButton" id="WANConnectionDevice_1_Firewall_AllowRemotePing" type="switch" state=""></div></td>
+	</tr>
+	<tr>
+		<td width="250">Log Dropped:</td>
+		<td><div class="switchButton" id="Firewall_LogDropped" type="switch" state=""></div></td>
+	</tr>
+	<tr>
+		<td width="250">Attack Detection WAN 1:</td>
+		<td>
+			v4: <div class="switchButton" id="WANConnectionDevice_1_Firewall_AttackDetection" type="switch" state="" style="display:inline-block; vertical-align:middle"></div>
+			 &nbsp; 
+			v6: <div class="switchButton" id="WANConnectionDevice_1_Firewall6_AttackDetection" type="switch" state="" style="display:inline-block; vertical-align:middle"></div>
+			</div>
+		</td>
+	</tr>
+</tbody>
+
+<thead>
+	<tr><th colspan="2">Services</th></tr>
+</thead>
+<tbody>
+	<tr>
+		<td width="250">HPNA:</td>
+		<td><div class="switchButton" id="HPNA_Enable" type="switch" state=""></div></td>
+	</tr>
+	<tr>
+		<td width="250">MDNSResponder:</td>
+		<td><div class="switchButton" id="Services_MDNSResponder_Enable" type="switch" state=""></div></td>
+	</tr>
+	<tr>
+		<td width="250">UpnpTracker:</td>
+		<td><div class="switchButton" id="Services_UpnpTracker_Enable" type="switch" state=""></div></td>
+	</tr>
+	<tr>
+		<td width="250">TR111:</td>
+		<td><div class="switchButton" id="Services_TR111_TR111Enable" type="switch" state=""></div></td>
+	</tr>
+	<tr>
+		<td width="250">VPNInterface:</td>
+		<td><div class="switchButton" id="VPNInterface_1_Enable" type="switch" state=""></div></td>
+	</tr>
+	<tr>
+		<td width="250">Voice:</td>
+		<td><div class="switchButton" id="Voice_Enable" type="switch" state=""></div></td>
+	</tr>
+</tbody>
+
+<thead>
+	<tr><th colspan="2">Traffic Control</th></tr>
+</thead>
+<tbody>
+	<tr>
+		<td width="250">Conntrack:</td>
+		<td>
+			Filter: <div class="switchButton" id="Conntrack_Filter_Enable" type="switch" state="" style="display:inline-block; vertical-align:middle"></div>
+			 &nbsp; 
+			Status: <div class="switchButton" id="Conntrack_EnableStatus" type="switch" state="" style="display:inline-block; vertical-align:middle"></div>
+		</td>
+	</tr>
+	<tr>
+		<td width="250">Accelerator:</td>
+		<td><div class="switchButton" id="Accelerator_EnableStatus" type="switch" state=""></div></td>
+	</tr>
+	<tr>
+		<td width="250">QueueManagement:</td>
+		<td><div class="switchButton" id="QueueManagement_Enable" type="switch" state=""></div></td>
+	</tr>
+</tbody>
+
+<tfoot>
+	<tr><td colspan="2">
+		<a id="cancel" class="btn-default-orange-small right"><span>Cancel</span></a>
+		<a id="save"  class="btn-default-orange-small right"><span>Save</span></a>
+	</td></tr>
+</tfoot>
+</table>
+
+</form>
+
+
+</div><!--col-722-->
+<!--#endAuth var=ok-->
+
+<div class="clear"></div>
+</div><!--conteudo-->
+<div class="clear"></div>
+</div><!--wrap-->
+</div><!--content-->
+</body>

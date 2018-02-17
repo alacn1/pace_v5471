@@ -58,6 +58,7 @@ var menuArr = [
                 '<li id="menu_usb"><a href="config_usb.htm"><strong>Dispositivos USB</strong></a></li>',
 <!--#endCheck var=ok-->
                 '<li id="menu_wan_mode"><a href="config_wan_mode.htm"><strong>Modo da WAN</strong></a></li>',
+                '<li id="menu_advanced"><a href="config_advanced.htm"><strong>Avan&ccedil;ado</strong></a></li>',
             '</ul>',
         '</li>',
         '<li class="menu"  id="menu_management">',
