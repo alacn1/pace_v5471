@@ -64,7 +64,7 @@ var menuArr = [
         '<li class="menu"  id="menu_management">',
             '<a class="menu-header" href="#device_management">Management</a>',
             '<ul class="ulmenu">',
-                '<li id="menu_languages"><a href="languages.htm"><strong>Language</a></li>',
+                '<li id="menu_languages"><a href="languages.htm"><strong>Language</strong></a></li>',
                 '<li id="menu_admin_password"><a href="admin_password.htm"><strong>Account Settings</strong></a></li>',
                 '<li id="menu_resets"><a href="resets.htm"><strong>Resets</strong></a></li>',
                 '<li id="menu_bbstats"><a href="bb_stats.htm"><strong>Statistics</strong></a></li>',
