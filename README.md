@@ -14,10 +14,17 @@ Para isso:
 5. Para entrar no "multicast mode" ligue o router segurando o botão wps.
 6. Envie a firmware com a ferramenta updatefw:
 ```
- ./updatefw -r firmware.bin
+./updatefw -r firmware.bin
 ```
 7. Se tudo correr bem o router vai bootar a firmware que foi enviada,
 caso contrário ele vai bootar a firmware da flash.
 
 O "multicast mode" não salva a firmware na flash.
 Para salvar na flash envie a firmware novamente com o `flash.sh`.
+
+# build firmware
+Para gerar a firmware utilize:
+```
+./fwbuild.sh srcfw.bin outfw.bin
+```
+Sendo `srcfw.bin` a firmware de origem para cópia do kernel e header, e `outfw.bin` o nome da firmware de destino.
