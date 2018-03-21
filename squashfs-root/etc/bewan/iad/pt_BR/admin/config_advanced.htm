@@ -45,6 +45,8 @@ var Page = (function($, App) {
 	function setupBinders() {
 		configBinder = App.DataBinder({
 			fields: [
+				"Device_IPv6Enable",
+				"LANDevice_1_HostConfig6_DHCPServer_Enable",
 				"Firewall_LogDropped",
 				"WANConnectionDevice_1_Firewall_AllowRemotePing",
 				"WANConnectionDevice_1_Firewall_AttackDetection",
@@ -61,6 +63,8 @@ var Page = (function($, App) {
 				"QueueManagement_Enable",
 			],
 			formatters: {
+				"Device_IPv6Enable": switchFormatter,
+				"LANDevice_1_HostConfig6_DHCPServer_Enable": switchFormatter,
 				"Firewall_LogDropped": switchFormatter,
 				"WANConnectionDevice_1_Firewall_AllowRemotePing": switchFormatter,
 				"WANConnectionDevice_1_Firewall_AttackDetection": switchFormatter,
@@ -132,9 +136,11 @@ var Page = (function($, App) {
 
 $.event.ready(function() {
 	var util = $.util,
-	token = util.parseJson('<!--#echo jsonvar="token=Firewall,WANConnectionDevice,HPNA,Services,VPNInterface,Voice,Conntrack,Accelerator,QueueManagement"-->'),
+	token = util.parseJson('<!--#echo jsonvar="token=Device_IPv6Enable,LANDevice,Firewall,WANConnectionDevice,HPNA,Services,VPNInterface,Voice,Conntrack,Accelerator,QueueManagement"-->'),
 	pageData = {
 		token: token,
+		Device: { IPv6Enable: util.parseJson('<!--#echo jsonvar="cli=Device_IPv6Enable"-->') },
+		LANDevice: { 1: { HostConfig6: { DHCPServer: { Enable: util.parseJson('<!--#echo jsonvar="cli=LANDevice_1_HostConfig6_DHCPServer_Enable"-->') } } } },
 		Firewall: { LogDropped: util.parseJson('<!--#echo jsonvar="cli=Firewall_LogDropped"-->') },
 		WANConnectionDevice: {
 			1: {
@@ -204,6 +210,20 @@ $.event.ready(function() {
 <form action="#" class="form-configuracoes">
 
 <table class="setupWifiTable">
+
+<thead>
+	<tr><th colspan="2">IPv6</th></tr>
+</thead>
+<tbody>
+	<tr>
+		<td width="250">IPv6 Ativo:</td>
+		<td><div class="switchButton" id="Device_IPv6Enable" type="switch" state=""></div></td>
+	</tr>
+	<tr>
+		<td width="250">Lan DHCPv6:</td>
+		<td><div class="switchButton" id="LANDevice_1_HostConfig6_DHCPServer_Enable" type="switch" state=""></div></td>
+	</tr>
+</tbody>
 
 <thead>
 	<tr><th colspan="2">Firewall</th></tr>
