@@ -149,6 +149,16 @@ auth.require = (
     "method" => "digest",
     "realm" => "Auth Required",
     "require" => "valid-user"
+  ),
+  "/pt_BR/admin/firmware.htm" => (
+    "method" => "digest",
+    "realm" => "Auth Required",
+    "require" => "valid-user"
+  ),
+  "/en_US/admin/firmware.htm" => (
+    "method" => "digest",
+    "realm" => "Auth Required",
+    "require" => "valid-user"
   )
 )
 EOF
