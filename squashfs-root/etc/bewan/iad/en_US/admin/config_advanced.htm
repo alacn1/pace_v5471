@@ -61,6 +61,9 @@ var Page = (function($, App) {
 				"Conntrack_Filter_Enable",
 				"Accelerator_EnableStatus",
 				"QueueManagement_Enable",
+				"PTMEthernetInterface_1_VLANInterface_2_Enable",
+				"PTMEthernetInterface_1_VLANInterface_3_Enable",
+				"PTMEthernetInterface_1_VLANInterface_4_Enable",
 			],
 			formatters: {
 				"Device_IPv6Enable": switchFormatter,
@@ -79,6 +82,9 @@ var Page = (function($, App) {
 				"Conntrack_Filter_Enable": switchFormatter,
 				"Accelerator_EnableStatus": switchFormatter,
 				"QueueManagement_Enable": switchFormatter,
+				"PTMEthernetInterface_1_VLANInterface_2_Enable": switchFormatter,
+				"PTMEthernetInterface_1_VLANInterface_3_Enable": switchFormatter,
+				"PTMEthernetInterface_1_VLANInterface_4_Enable": switchFormatter,
 			}, 
 		});
 	}
@@ -136,7 +142,7 @@ var Page = (function($, App) {
 
 $.event.ready(function() {
 	var util = $.util,
-	token = util.parseJson('<!--#echo jsonvar="token=Device_IPv6Enable,LANDevice,Firewall,WANConnectionDevice,HPNA,Services,VPNInterface,Voice,Conntrack,Accelerator,QueueManagement"-->'),
+	token = util.parseJson('<!--#echo jsonvar="token=Device_IPv6Enable,LANDevice,Firewall,WANConnectionDevice,HPNA,Services,VPNInterface,Voice,Conntrack,Accelerator,QueueManagement,PTMEthernetInterface"-->'),
 	pageData = {
 		token: token,
 		Device: { IPv6Enable: util.parseJson('<!--#echo jsonvar="cli=Device_IPv6Enable"-->') },
@@ -167,6 +173,11 @@ $.event.ready(function() {
 		},
 		Accelerator: { EnableStatus: util.parseJson('<!--#echo jsonvar="cli=Accelerator_EnableStatus"-->') },
 		QueueManagement: { Enable: util.parseJson('<!--#echo jsonvar="cli=QueueManagement_Enable"-->') },
+		PTMEthernetInterface: { 1: { VLANInterface: {
+			2: { Enable: util.parseJson('<!--#echo jsonvar="cli=PTMEthernetInterface_1_VLANInterface_2_Enable"-->') },
+			3: { Enable: util.parseJson('<!--#echo jsonvar="cli=PTMEthernetInterface_1_VLANInterface_3_Enable"-->') },
+			4: { Enable: util.parseJson('<!--#echo jsonvar="cli=PTMEthernetInterface_1_VLANInterface_4_Enable"-->') },
+		} } },
 	};
 	Page.init(pageData);
 });
@@ -276,6 +287,24 @@ $.event.ready(function() {
 	<tr>
 		<td width="250">Voice:</td>
 		<td><div class="switchButton" id="Voice_Enable" type="switch" state=""></div></td>
+	</tr>
+</tbody>
+
+<thead>
+	<tr><th colspan="2">PTM VLAN</th></tr>
+</thead>
+<tbody>
+	<tr>
+		<td width="250">VLAN 601:</td>
+		<td><div class="switchButton" id="PTMEthernetInterface_1_VLANInterface_2_Enable" type="switch" state=""></div></td>
+	</tr>
+	<tr>
+		<td width="250">VLAN 602:</td>
+		<td><div class="switchButton" id="PTMEthernetInterface_1_VLANInterface_3_Enable" type="switch" state=""></div></td>
+	</tr>
+	<tr>
+		<td width="250">VLAN 4000:</td>
+		<td><div class="switchButton" id="PTMEthernetInterface_1_VLANInterface_4_Enable" type="switch" state=""></div></td>
 	</tr>
 </tbody>
 
