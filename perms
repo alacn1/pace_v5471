@@ -554,6 +554,7 @@ lrwxrwxrwx squashfs-root/etc/bewan/ip-up.d/S00-0-ipconf
 -rwxr-xr-x squashfs-root/etc/bewan/ip-up.d/S00-rpfilter
 lrwxrwxrwx squashfs-root/etc/bewan/ip-up.d/S01-led
 lrwxrwxrwx squashfs-root/etc/bewan/ip-up.d/S01-led-3g
+-rwxr-xr-x squashfs-root/etc/bewan/ip-up.d/S20-dnsmasq
 -rwxr-xr-x squashfs-root/etc/bewan/ip-up.d/S50-gvtSTB
 -rwxr-xr-x squashfs-root/etc/bewan/ip-up.d/S60-dhcp43
 -rwxr-xr-x squashfs-root/etc/bewan/ip-up.d/S60dyndns
