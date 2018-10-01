@@ -5,13 +5,23 @@ UPDATEFW=./updatefw
 ROOTFS=squashfs-root
 OUTDIR=build
 
-if [ -z "$1" ] || [ -z "$2" ]
-then
-	echo "usage: $0 srcfw.bin outfw.bin"
-	exit 1
-fi
+# version from last tag v*
+# strip v and -0
+VERSION=`git describe --long --tags --match 'v*' | sed -r 's/^v(.+)$/\1/;s/^(.*)-0-(.*)$/\1-\2/'`
+
+# params check
 SRCFW=$1
 OUTFW=$2
+if [ -z "$OUTFW" ] && [ ! -z "$VERSION" ]
+then
+	OUTFW="$VERSION.bin"
+fi
+if [ -z "$SRCFW" ] || [ -z "$OUTFW" ]
+then
+	echo "usage: $0 srcfw.bin [outfw.bin]"
+	exit 1
+fi
+
 
 # sanity check
 if [ ! -f "$SRCFW" ]
@@ -47,6 +57,14 @@ if [ ! -d "$OUTDIR" ]
 then
 	mkdir -p $OUTDIR
 fi
+
+
+# update version
+if [ ! -z "$VERSION" ]
+then
+	echo "$VERSION" > squashfs-root/etc/bewan/release
+fi
+
 
 # build fs
 FS=`dirname $OUTFILE`/`basename -s .bin $OUTFILE`.fs
