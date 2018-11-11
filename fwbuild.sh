@@ -5,6 +5,9 @@ UPDATEFW=./updatefw
 ROOTFS=squashfs-root
 OUTDIR=build
 
+# save old version
+OLDVERSION=`cat squashfs-root/etc/bewan/release`
+
 # version from last tag v*
 # strip v and -0
 VERSION=`git describe --long --tags --match 'v*' | sed -r 's/^v(.+)$/\1/;s/^(.*)-0-(.*)$/\1-\2/'`
@@ -72,9 +75,13 @@ FS=`dirname $OUTFILE`/`basename -s .bin $OUTFILE`.fs
 RET=$?
 if [ $RET != 0 ]
 then
+	echo "$OLDVERSION" > squashfs-root/etc/bewan/release
 	echo "ERROR: fs build failed"
 	exit 1
 fi
+
+# restore old version
+echo "$OLDVERSION" > squashfs-root/etc/bewan/release
 
 # build fw
 echo "building $OUTFILE ..."
