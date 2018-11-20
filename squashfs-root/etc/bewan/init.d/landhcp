@@ -290,7 +290,10 @@ EOF
       local iana=3561
       cat <<EOF >>$conf_file
 # Option 125 for TR111
-dhcp-option=$IFNAME,option:vendor-id-spec,$iana,$oui,$serial,$prod
+# dhcp-option=$IFNAME,option:vendor-id-spec,$iana,$oui,$serial,$prod
+dhcp-option=$IFNAME,vi-encap:$iana,4,"$oui"
+dhcp-option=$IFNAME,vi-encap:$iana,5,"$serial"
+dhcp-option=$IFNAME,vi-encap:$iana,6,"$prod"
 EOF
     fi
   fi

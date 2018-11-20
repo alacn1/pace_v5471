@@ -7,7 +7,7 @@ if [ "${ARG:-}" = '' ]; then
   . /etc/bewan/init.d/setparam
 fi
 
-DNSMASQ_ID=${DNSMASQ_ID:-}
+local DNSMASQ_ID=${DNSMASQ_ID:-}
 if [ "$DNSMASQ_ID" = '' ]; then
   DNSMASQ_ID=${2:-}
 fi

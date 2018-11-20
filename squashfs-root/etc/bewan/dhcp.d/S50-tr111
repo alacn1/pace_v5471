@@ -7,8 +7,9 @@
 
 main_dhcp_tr111()
 {
-	if [ $ACTION != "add" ] || [ "${DNSMASQ_DEVICE_ENTERPRISE:-}" != '3561' ]; then
-		return
+        
+	if [ $ACTION != "add" ] || [ "${DNSMASQ_CPEWAN_OUI:-}" = '' ] || [ "${DNSMASQ_CPEWAN_SERIAL:-}" = '' ];  then
+	        return
 	fi
 
 	local dir='/var/bewan/tr111.d'
@@ -16,22 +17,23 @@ main_dhcp_tr111()
 	mkdir -p $dir
 
 	local type
+        local DNSMASQ_DEVICE_111_TYPE=${DNSMASQ_DEVICE_111_TYPE:-1}
 	if [ "${DNSMASQ_DEVICE_111_TYPE:-0}" = 1 ]; then
 		type='TR111'
 	else
 		type='WT111'
 	fi
-	local oui="${DNSMASQ_DEVICE_MANUFACTUREROUI:-}"
+	local oui="${DNSMASQ_CPEWAN_OUI:-}"
 	if [ "$oui" = '' ]; then
-		oui='*'
+		oui="${DNSMASQ_CPEWAN_OUI:-*}"
 	fi
-	local serial="${DNSMASQ_DEVICE_SERIAL:-}"
+	local serial="${DNSMASQ_CPEWAN_SERIAL:-}"
 	if [ "$serial" = '' ]; then
-		serial='*'
+		serial="${DNSMASQ_CPEWAN_SERIAL:-*}"
 	fi
-	local class="${DNSMASQ_DEVICE_PRODUCT_CLASS:-}"
+	local class="${DNSMASQ_CPEWAN_CLASS:-}"
 	if [ "$class" = '' ]; then
-		class='*'
+		class="${DNSMASQ_CPEWAN_CLASS:-*}"
 	fi
 	# Line to insert in device_param file
 	local line="$MAC $IP $type $oui $serial $class"

@@ -17,7 +17,7 @@ old_library=''
 inherited_linker_flags=''
 
 # Libraries that this one depends upon.
-dependency_libs=' -L/home/devbuild/build/bewan/build/B14103/uclibc/lib -L/home/devbuild/build/bewan/build/B14103/lib'
+dependency_libs=' -L/export/home/GATEWAY/28Nov17_GVT_VDSL/B14103-GVT-RC2/bewan/build/B14103/uclibc/lib -L/export/home/GATEWAY/28Nov17_GVT_VDSL/B14103-GVT-RC2/bewan/build/B14103/lib'
 
 # Names of additional weak libraries provided by this library
 weak_library_names=''
@@ -38,4 +38,4 @@ dlopen=''
 dlpreopen=''
 
 # Directory that this library needs to be installed in:
-libdir='/home/devbuild/build/bewan/build/B14103/fs/lib'
+libdir='/export/home/GATEWAY/28Nov17_GVT_VDSL/B14103-GVT-RC2/bewan/build/B14103/fs/lib'

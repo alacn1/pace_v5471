@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='utf-8'?>
+<?xml version='1.0' encoding='UTF-8'?>
 <bewan oid="27619">
   <Config type="obj" oid="1">
     <Version type="string" writable="1" oid="1">2.0</Version>
@@ -291,7 +291,7 @@
       <SkbMark type="int" writable="1" onchange="/etc/bewan/init.d/tr069" oid="39" merged_from="/packages/tr069/BEWAN/router.xml">0</SkbMark>
       <NotificationLimit type="int" writable="1" oid="40" merged_from="/packages/tr069/BEWAN/router.xml">0</NotificationLimit>
     </TR069>
-    <Time merged_from="/packages/base_time/BEWAN/router.xml" type="obj" oid="13">
+    <Time type="obj" oid="13" merged_from="/packages/base_time/BEWAN/router.xml">
       <LocalTimeZone type="gmt" writable="1" onchange="/etc/bewan/init.d/time" oid="1" merged_from="/packages/base_time/BEWAN/router.xml">CET-1DST,M3.5.0/2:00,M10.5.0/3:00</LocalTimeZone>
       <LocalTimeZoneArea type="string" writable="1" oid="2" merged_from="/packages/base_time/BEWAN/router.xml">FR</LocalTimeZoneArea>
       <InitialDate type="string" writable="1" oid="3" merged_from="/packages/base_time/BEWAN/router.xml">010100002010</InitialDate>
@@ -934,7 +934,7 @@
       </Full>
     </DMZ>
     <PortMapping_List type="ints" onchange="/etc/bewan/init.d/ports" withparam="1" oid="31" merged_from="/packages/base_netfilter/BEWAN/router.xml"/>
-    <PortMapping type="list" writable="1" oid="32" merged_from="/packages/base_netfilter/BEWAN/router.xml">
+    <PortMapping merged_from="/packages/base_netfilter/BEWAN/router.xml" type="list" writable="1" oid="32">
       <Enable type="bool" writable="1" onchange="/etc/bewan/init.d/ports" withparam="1" oid="1" merged_from="/packages/base_netfilter/BEWAN/router.xml">0</Enable>
       <RemoteHost type="ip" writable="1" onchange="/etc/bewan/init.d/ports" withparam="1" oid="2" merged_from="/packages/base_netfilter/BEWAN/router.xml"/>
       <ExternalPort type="portranges" writable="1" onchange="/etc/bewan/init.d/ports" withparam="1" oid="3" merged_from="/packages/base_netfilter/BEWAN/router.xml"/>
@@ -944,8 +944,8 @@
       <InternalClient type="ip" writable="1" onchange="/etc/bewan/init.d/ports" withparam="1" oid="7" merged_from="/packages/base_netfilter/BEWAN/router.xml"/>
       <Description type="string" writable="1" withparam="1" oid="8" merged_from="/packages/base_netfilter/BEWAN/router.xml"/>
       <User type="bool" writable="1" withparam="1" oid="9" merged_from="/packages/base_netfilter/BEWAN/router.xml">1</User>
-      <Type type="string" writable="1" oid="10" merged_from="/packages/custom_GVT/BEWAN/router.xml"/>
-    </PortMapping>
+    <Type type="string" writable="1" oid="10" merged_from="/packages/custom_GVT/BEWAN/router.xml"/>
+      </PortMapping>
     <Firewall type="obj" oid="33" merged_from="/packages/base_netfilter/BEWAN/router.xml">
       <Enable type="bool" writable="1" required="2" onchange="/etc/bewan/init.d/firewall4" oid="1" merged_from="/packages/base_netfilter/BEWAN/router.xml">1</Enable>
       <AttackDetection type="bool" writable="1" required="1" onchange="/etc/bewan/init.d/firewall4" oid="2" merged_from="/packages/base_netfilter/BEWAN/router.xml">1</AttackDetection>
@@ -1090,7 +1090,7 @@
       </Forwarding>
     <ActiveConnectionService type="int" status="route_infos.so!public_wan" delay="1" oid="6" merged_from="/packages/base_routing/BEWAN/router.xml"/>
     </Layer3Forwarding>
-  <User_List type="ints" writable="1" oid="13" merged_from="/packages/base_users/BEWAN/router.xml"/>
+<User_List type="ints" writable="1" oid="13" merged_from="/packages/base_users/BEWAN/router.xml"/>
   <User type="list" writable="1" oid="14" merged_from="/packages/base_users/BEWAN/router.xml">
     <Enable type="bool" writable="1" onchange="/etc/bewan/init.d/users" withparam="0" oid="1" merged_from="/packages/base_users/BEWAN/router.xml">0</Enable>
     <User type="bool" writable="0" onchange="/etc/bewan/init.d/users" withparam="0" oid="2" merged_from="/packages/base_users/BEWAN/router.xml">1</User>
@@ -1317,7 +1317,7 @@
     </WPSStatus>
   <MacOffset type="ints" writable="0" oid="22" merged_from="/packages/base_wifi/BEWAN/router.xml">0</MacOffset>
     </WLANInterface>
-  <Conntrack type="obj" oid="25" merged_from="/packages/base_netfilter/BEWAN/router.xml">
+  <Conntrack merged_from="/packages/base_netfilter/BEWAN/router.xml" type="obj" oid="25">
     <EnableStatus type="bool" writable="1" oid="1" merged_from="/packages/base_netfilter/BEWAN/router.xml">1</EnableStatus>
     <Item_Count type="int" status="" delay="-1" oid="2" merged_from="/packages/base_netfilter/BEWAN/router.xml"/>
     <Item type="array" status="netfilter_infos.so!get_conntrack" delay="5" oid="3" merged_from="/packages/base_netfilter/BEWAN/router.xml">
@@ -1335,7 +1335,7 @@
       <Port type="ints" writable="1" oid="2" onchange="/etc/bewan/init.d/rtsp-conntrack" merged_from="/packages/meta_rtsp-conntrack-module/BEWAN/router.xml">554</Port>
       <PauseTimeout type="int" writable="1" oid="3" onchange="/etc/bewan/init.d/rtsp-conntrack" merged_from="/packages/meta_rtsp-conntrack-module/BEWAN/router.xml">3600</PauseTimeout>
     </RTSPConntrack>
-  <MaxEntries type="int" writable="1" onchange="/etc/bewan/init.d/conntrack" oid="5" merged_from="/packages/base_netfilter/BEWAN/router.xml"/>
+    <MaxEntries type="int" writable="1" onchange="/etc/bewan/init.d/conntrack" oid="5" merged_from="/packages/base_netfilter/BEWAN/router.xml"/>
     <TCPTimeout type="int" writable="1" onchange="/etc/bewan/init.d/conntrack" oid="6" merged_from="/packages/base_netfilter/BEWAN/router.xml"/>
     <TCPTimeoutFinWait type="int" writable="1" onchange="/etc/bewan/init.d/conntrack" oid="7" merged_from="/packages/base_netfilter/BEWAN/router.xml"/>
     <TCPTimeoutCloseWait type="int" writable="1" onchange="/etc/bewan/init.d/conntrack" oid="8" merged_from="/packages/base_netfilter/BEWAN/router.xml"/>
@@ -1357,7 +1357,7 @@
       <SessionsCount type="int" delay="10" status="netfilter_infos.so!get_sessions_count" oid="14" merged_from="/packages/base_netfilter/BEWAN/router.xml"/>
         </Rules>
     </Filter>
-    <BucketSize type="int" writable="1" onchange="/etc/bewan/init.d/conntrack" oid="16" merged_from="/packages/base_netfilter/BEWAN/router.xml"/>
+  <BucketSize type="int" writable="1" onchange="/etc/bewan/init.d/conntrack" oid="16" merged_from="/packages/base_netfilter/BEWAN/router.xml"/>
     <MaxExpectEntries type="int" writable="1" onchange="/etc/bewan/init.d/conntrack" oid="17" merged_from="/packages/base_netfilter/BEWAN/router.xml"/>
     </Conntrack>
   <WebAuthenticator type="obj" oid="27" merged_from="/packages/libwebauth/BEWAN/router.xml">
@@ -1780,7 +1780,7 @@
     <ModemDiscriminationOnPrANSTone type="bool" writable="1" onchange="/etc/bewan/init.d/voip" withparam="0" oid="18" merged_from="/packages/base_voip/BEWAN/router.xml">0</ModemDiscriminationOnPrANSTone>
     </VoiceCustomizations>
   <ATMEthernetInterface_Count type="int" oid="40" merged_from="/packages/base_atm/BEWAN/router.xml">0</ATMEthernetInterface_Count>
-  <ATMEthernetInterface merged_from="/packages/base_atm/BEWAN/router.xml" type="array" oid="41">
+  <ATMEthernetInterface type="array" oid="41" merged_from="/packages/base_atm/BEWAN/router.xml">
     <Enable type="bool" writable="1" required="2" onchange="/etc/bewan/init.d/ethatm" oid="1" merged_from="/packages/base_atm/BEWAN/router.xml">0</Enable>
     <Ifname type="string" writable="0" required="1" oid="2" merged_from="/packages/base_atm/BEWAN/router.xml"/>
     <LinkState type="string" delay="5" values="Up,Down" status="interface_infos.so!is_interface_link_running" oid="3" merged_from="/packages/base_atm/BEWAN/router.xml"/>
@@ -1831,9 +1831,9 @@
         <MaxResponseTime type="int" oid="6" merged_from="/packages/base_atm/BEWAN/router.xml"/>
       </Stats>
     </Diagnostic>
-  <TR069Offset type="int" writable="1" oid="101" merged_from="/packages/tr069/BEWAN/router.xml">0</TR069Offset>
+    <TR069Offset type="int" writable="1" oid="101" merged_from="/packages/tr069/BEWAN/router.xml">0</TR069Offset>
     <Created type="int" writable="1" oid="103" merged_from="/packages/tr069/BEWAN/router.xml">0</Created>
-    </ATMEthernetInterface>
+  </ATMEthernetInterface>
   <WANEthernetInterface_Count type="int" oid="42" merged_from="/packages/base_ethernet_v2/BEWAN/router.xml">0</WANEthernetInterface_Count>
   <WANEthernetInterface type="array" oid="43" merged_from="/packages/base_ethernet_v2/BEWAN/router.xml">
     <Enable type="bool" writable="1" required="2" onchange="/etc/bewan/init.d/wanethernet" oid="1" merged_from="/packages/base_ethernet_v2/BEWAN/router.xml">0</Enable>
@@ -1843,7 +1843,7 @@
     <MacOffset type="int" writable="0" oid="5" merged_from="/packages/base_ethernet_v2/BEWAN/router.xml"/>
     <CurrentMACAddress type="string" status="interface_infos.so!get_mac" oid="6" delay="120" merged_from="/packages/base_ethernet_v2/BEWAN/router.xml"/>
     <VLANInterface_List type="ints" withparam="2" onchange="/etc/bewan/init.d/vlanwaneth" oid="7" merged_from="/packages/base_vlan_v2/BEWAN/router.xml"/>
-    <VLANInterface merged_from="/packages/base_vlan_v2/BEWAN/router.xml" type="list" writable="1" oid="8">
+    <VLANInterface type="list" writable="1" oid="8" merged_from="/packages/base_vlan_v2/BEWAN/router.xml">
       <Enable type="bool" writable="1" withparam="2" onchange="/etc/bewan/init.d/vlanwaneth" oid="1" merged_from="/packages/base_vlan_v2/BEWAN/router.xml">0</Enable>
       <VID type="int" values="0:4094" writable="1" required="1" withparam="2" onchange="/etc/bewan/init.d/vlanwaneth" oid="2" merged_from="/packages/base_vlan_v2/BEWAN/router.xml"/>
       <PrioMap type="ints" values="0:7" writable="1" withparam="2" onchange="/etc/bewan/init.d/vlanwaneth" oid="3" merged_from="/packages/base_vlan_v2/BEWAN/router.xml"/>
@@ -1859,19 +1859,19 @@
         <TxBytes type="int" oid="8" merged_from="/packages/base_vlan_v2/BEWAN/router.xml"/>
         <ARPTable type="macs" oid="9" merged_from="/packages/base_vlan_v2/BEWAN/router.xml"/>
       </Counters>
-    <CurrentMACAddress type="string" status="interface_infos.so!get_mac" oid="8" delay="120" merged_from="/packages/base_vlan_v2/BEWAN/router.xml"/>
+      <CurrentMACAddress type="string" status="interface_infos.so!get_mac" oid="8" delay="120" merged_from="/packages/base_vlan_v2/BEWAN/router.xml"/>
       <TR069Offset type="int" writable="1" oid="101" merged_from="/packages/tr069/BEWAN/router.xml">0</TR069Offset>
       <TR098WANEnumerate type="bool" writable="1" onchange="/etc/bewan/init.d/tr069" oid="102" merged_from="/packages/tr069/BEWAN/router.xml">1</TR098WANEnumerate>
-      <User type="bool" writable="0" oid="104" merged_from="/packages/base_vlan_v2/BEWAN/router.xml">1</User>
+    <User type="bool" writable="0" oid="104" merged_from="/packages/base_vlan_v2/BEWAN/router.xml">1</User>
       </VLANInterface>
     <QosEnable type="bool" writable="1" required="1" onchange="/etc/bewan/init.d/wanethernet" oid="9" merged_from="/packages/base_ethernet_v2/BEWAN/router.xml">0</QosEnable>
     <LinkMonitor type="obj" oid="12" merged_from="/packages/base_switch_v2/BEWAN/router.xml">
       <Enable type="bool" writable="1" withparam="1" onchange="/etc/bewan/init.d/waneth_linkmon" oid="1" merged_from="/packages/base_switch_v2/BEWAN/router.xml">0</Enable>
       <ManageCarrier type="bool" writable="1" withparam="1" onchange="/etc/bewan/init.d/waneth_linkmon" oid="2" merged_from="/packages/base_switch_v2/BEWAN/router.xml">1</ManageCarrier>
     </LinkMonitor>
-  <TR069Offset type="int" writable="1" oid="101" merged_from="/packages/tr069/BEWAN/router.xml">0</TR069Offset>
+    <TR069Offset type="int" writable="1" oid="101" merged_from="/packages/tr069/BEWAN/router.xml">0</TR069Offset>
     <TR098WANEnumerate type="bool" writable="1" onchange="/etc/bewan/init.d/tr069" oid="102" merged_from="/packages/tr069/BEWAN/router.xml">1</TR098WANEnumerate>
-    <Counters type="obj" delay="10" status="interface_infos.so!network_counters_arp" oid="104" merged_from="/packages/base_ethernet_v2/BEWAN/router.xml">
+  <Counters type="obj" delay="10" status="interface_infos.so!network_counters_arp" oid="104" merged_from="/packages/base_ethernet_v2/BEWAN/router.xml">
       <RxPackets type="int" oid="1" merged_from="/packages/base_ethernet_v2/BEWAN/router.xml"/>
       <RxPacketsErrors type="int" oid="2" merged_from="/packages/base_ethernet_v2/BEWAN/router.xml"/>
       <RxPacketsDiscards type="int" oid="3" merged_from="/packages/base_ethernet_v2/BEWAN/router.xml"/>
@@ -2322,7 +2322,7 @@
     </Queue>
   </QueueManagement>
   <PTMEthernetInterface_Count type="int" oid="70" merged_from="/packages/base_ptm/BEWAN/router.xml">0</PTMEthernetInterface_Count>
-  <PTMEthernetInterface merged_from="/packages/base_ptm/BEWAN/router.xml" type="array" oid="71">
+  <PTMEthernetInterface type="array" oid="71" merged_from="/packages/base_ptm/BEWAN/router.xml">
     <Enable type="bool" writable="1" onchange="/etc/bewan/init.d/ethptm" oid="1" merged_from="/packages/base_ptm/BEWAN/router.xml">0</Enable>
     <Ifname type="string" writable="0" required="1" oid="2" merged_from="/packages/base_ptm/BEWAN/router.xml"/>
     <LinkState type="string" delay="5" values="Up,Down" status="interface_infos.so!is_interface_link_running" oid="3" merged_from="/packages/base_ptm/BEWAN/router.xml"/>
@@ -2351,7 +2351,7 @@
     <User type="bool" writable="0" oid="7" merged_from="/packages/base_vlan_v2/BEWAN/router.xml">1</User>
       <CurrentMACAddress type="string" status="interface_infos.so!get_mac" oid="8" delay="120" merged_from="/packages/base_vlan_v2/BEWAN/router.xml"/>
       </VLANInterface>
-  <Counters type="obj" delay="10" status="interface_infos.so!network_counters" oid="11" merged_from="/packages/base_ptm/BEWAN/router.xml">
+    <Counters type="obj" delay="10" status="interface_infos.so!network_counters" oid="11" merged_from="/packages/base_ptm/BEWAN/router.xml">
       <RxPackets type="int" oid="1" merged_from="/packages/base_ptm/BEWAN/router.xml"/>
       <RxPacketsErrors type="int" oid="2" merged_from="/packages/base_ptm/BEWAN/router.xml"/>
       <RxPacketsDiscards type="int" oid="3" merged_from="/packages/base_ptm/BEWAN/router.xml"/>
@@ -2364,7 +2364,7 @@
     <TR069Offset type="int" writable="1" oid="101" merged_from="/packages/tr069/BEWAN/router.xml">0</TR069Offset>
     <CurrentMACAddress type="string" status="interface_infos.so!get_mac" oid="102" delay="120" merged_from="/packages/base_ptm/BEWAN/router.xml"/>
     <TR098WANEnumerate type="bool" writable="1" onchange="/etc/bewan/init.d/tr069" oid="103" merged_from="/packages/tr069/BEWAN/router.xml">1</TR098WANEnumerate>
-    </PTMEthernetInterface>
+  </PTMEthernetInterface>
   <HPNA type="obj" oid="100" merged_from="/packages/base_hpna/BEWAN/router.xml">
     <Enable type="bool" writable="1" required="1" onchange="/etc/bewan/init.d/hpna" oid="1" merged_from="/packages/base_hpna/BEWAN/router.xml">0</Enable>
     <Romless type="bool" writable="1" onchange="/etc/bewan/init.d/hpna" oid="2" merged_from="/packages/base_hpna/BEWAN/router.xml">1</Romless>
@@ -2620,7 +2620,7 @@
       <Access type="string" oid="9" merged_from="/packages/base_modem/BEWAN/router.xml"/>
     </Status>
   </ModemInterface>
-<ProcessTable type="obj" oid="105" merged_from="/packages/base_system/BEWAN/router.xml">
+  <ProcessTable type="obj" oid="105" merged_from="/packages/base_system/BEWAN/router.xml">
     <Enable type="bool" writable="1" oid="1" merged_from="/packages/base_system/BEWAN/router.xml">0</Enable>
     <Item_Count type="int" status="" delay="-1" oid="2" merged_from="/packages/base_system/BEWAN/router.xml"/>
     <Item type="array" status="process_table.so!get_process" delay="10" oid="3" merged_from="/packages/base_system/BEWAN/router.xml">

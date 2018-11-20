@@ -3,4 +3,4 @@
  * the static library, so try that secondarily. */
 OUTPUT_FORMAT("elf32-tradbigmips", "elf32-tradbigmips",
 	      "elf32-tradlittlemips")
-GROUP ( /home/devbuild/build/bewan/build/B14103/uclibc/lib/libc.so.0 /home/devbuild/build/bewan/build/B14103/uclibc/lib/uclibc_nonshared.a AS_NEEDED ( /home/devbuild/build/bewan/build/B14103/uclibc/lib/ld-uClibc.so.0 ) )
+GROUP ( /export/home/GATEWAY/28Nov17_GVT_VDSL/B14103-GVT-RC2/bewan/build/B14103/uclibc/lib/libc.so.0 /export/home/GATEWAY/28Nov17_GVT_VDSL/B14103-GVT-RC2/bewan/build/B14103/uclibc/lib/uclibc_nonshared.a AS_NEEDED ( /export/home/GATEWAY/28Nov17_GVT_VDSL/B14103-GVT-RC2/bewan/build/B14103/uclibc/lib/ld-uClibc.so.0 ) )

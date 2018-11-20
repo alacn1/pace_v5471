@@ -1,9 +1,0 @@
-#!/bin/sh
-
-restart_dnsmasq() {
-  ARG=restart
-  base_call_initd 'dnsmasq'
-}
-
-restart_dnsmasq
-

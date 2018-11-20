@@ -131,35 +131,4 @@ EOF
 		find /etc/bewan/http.alias.d/ -name "*.alias" -exec \
 				sed 's/^\([^:]*\):\(.*\)$/alias.url+=("\/\1\" => server.document-root + "\/cgi-bin\/\2")/g' /etc/bewan/http.alias.d > ${LIGHTY_CONF_DIR}/conf.d/alias.conf {} \;
 		echo "include_shell \"find ${LIGHTY_CONF_DIR}/conf.d -name '*.conf' -exec cat {} \;\"" >> ${LIGHTY_CONF}
-
-
-  # Alacn, 2018-01-28
-  # require authentication for firmware upload
-  cat > ${LIGHTY_CONF_DIR}/conf.d/firmware.conf <<EOF
-server.modules += ( "mod_auth" )
-auth.backend = "plain"
-auth.backend.plain.userfile = "/var/bewan/webuser.d/.iad_admin"
-auth.require = (
-  "/firmware.cgi" => (
-    "method" => "digest",
-    "realm" => "Auth Required",
-    "require" => "valid-user"
-  ),
-  "/cgi-bin/firmware.cgi" => (
-    "method" => "digest",
-    "realm" => "Auth Required",
-    "require" => "valid-user"
-  ),
-  "/pt_BR/admin/firmware.htm" => (
-    "method" => "digest",
-    "realm" => "Auth Required",
-    "require" => "valid-user"
-  ),
-  "/en_US/admin/firmware.htm" => (
-    "method" => "digest",
-    "realm" => "Auth Required",
-    "require" => "valid-user"
-  )
-)
-EOF
 }
