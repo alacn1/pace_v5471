@@ -1,0 +1,6 @@
+http://firmware.gvt.net.br/firmware/Pace/V5471/B14103-GVT-RC2-92276.bin
+http://firmware.gvt.net.br/firmware/Pace/V5471/B14103-GVT-RC2-98509.bin
+http://firmware.gvt.net.br/firmware/Pace/V5471/B14103-GVT-RC2-103140.bin
+http://firmware.gvt.net.br/firmware/Pace/V5471/B14103-GVT-RC2-103961.bin
+http://firmware.gvt.net.br/firmware/Pace/V5471/B14103-GVT-RC2-104452.bin
+
